@@ -18,7 +18,7 @@ import networkx as nx
 import sys
 import re
 import matplotlib.pyplot as plt
-import PIL
+#import PIL
 
 #pre-processing
 lines=""

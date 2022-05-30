@@ -1,0 +1,104 @@
+description: "Default Chassis Config for dgecore Wedge100BF-32x"
+chassis {
+  platform: PLT_GENERIC_BAREFOOT_TOFINO
+  name: "Edgecore Wedge100BF-32x"
+}
+nodes {
+  id: 1
+  slot: 1
+  index: 1
+}
+singleton_ports {
+  id: 136
+  name: "2/0"
+  slot: 1
+  port: 2
+  channel: 1
+  speed_bps: 10000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+singleton_ports {
+  id: 130
+  name: "1/2"
+  slot: 3
+  port: 1
+  channel: 3
+  speed_bps: 10000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+singleton_ports {
+  id: 128
+  name: "1/0"
+  slot: 1
+  port: 1
+  channel: 1
+  speed_bps: 10000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+singleton_ports {
+  id: 129
+  name: "1/1"
+  slot: 2
+  port: 1
+  channel: 2
+  speed_bps: 10000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+singleton_ports {
+  id: 168
+  name: "6/0"
+  slot: 1
+  port: 6
+  speed_bps: 100000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+singleton_ports {
+  id: 184
+  name: "8/0"
+  slot: 1
+  port: 8
+  speed_bps: 100000000000
+  config_params {
+    admin_state: ADMIN_STATE_ENABLED
+    autoneg: TRI_STATE_FALSE
+  }
+  node: 1
+}
+vendor_config {
+  tofino_config {
+    node_id_to_port_shaping_config {
+      key: 1
+      value {
+        per_port_shaping_configs {
+          key: 136
+          value {
+            byte_shaping {
+              max_rate_bps: 10000000000# 10000000000 10Gbps 500000000
+              max_burst_bytes: 9000 # 2x jumbo frame
+            }
+          }
+        }
+      }
+    }
+  }
+}
