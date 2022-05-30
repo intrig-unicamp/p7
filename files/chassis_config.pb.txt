@@ -35,32 +35,6 @@ singleton_ports {
   node: 1
 }
 singleton_ports {
-  id: 128
-  name: "1/0"
-  slot: 1
-  port: 1
-  channel: 1
-  speed_bps: 10000000000
-  config_params {
-    admin_state: ADMIN_STATE_ENABLED
-    autoneg: TRI_STATE_FALSE
-  }
-  node: 1
-}
-singleton_ports {
-  id: 129
-  name: "1/1"
-  slot: 2
-  port: 1
-  channel: 2
-  speed_bps: 10000000000
-  config_params {
-    admin_state: ADMIN_STATE_ENABLED
-    autoneg: TRI_STATE_FALSE
-  }
-  node: 1
-}
-singleton_ports {
   id: 168
   name: "6/0"
   slot: 1

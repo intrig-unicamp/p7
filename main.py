@@ -26,28 +26,17 @@ topo.addrec_port(68)
 
 # addswitch(name)
 topo.addswitch("sw1")
-topo.addswitch("sw2")
-topo.addswitch("sw3")
-topo.addswitch("sw4")
 
 # addhost(name,port,D_P,speed_bps,AU,FEC,vlan)
 # include the link configuration
 topo.addhost("h1","2/0", 136, 10000000000, "False", "False", 1920, "192.168.0.1")
 topo.addhost("h2","1/2", 130, 10000000000, "False", "False", 1920, "192.168.0.5")
-topo.addhost("h3","1/0", 128, 10000000000, "False", "False", 1920, "192.168.0.2")
-topo.addhost("h4","1/1", 129, 10000000000, "False", "False", 1920, "192.168.0.3")
 
 
 # addlink(node1, node2, bw, pkt_loss, latency, jitter, percentage)
 # bw is considered just for the first defined link
 topo.addlink("h1","sw1", 10000000000, 0, 5, 2, 100)
-topo.addlink("h2","sw2", 10000000000, 0, 5, 2, 100)
-topo.addlink("h3","sw3", 10000000000, 0, 5, 2, 100)
-topo.addlink("h4","sw4", 10000000000, 0, 5, 2, 100)
-topo.addlink("sw1","sw2", 10000000000, 0, 5, 2, 100)
-topo.addlink("sw2","sw3", 10000000000, 0, 5, 2, 100)
-topo.addlink("sw3","sw4", 10000000000, 0, 5, 2, 100)
-topo.addlink("sw4","sw1", 10000000000, 0, 5, 2, 100)
+topo.addlink("sw1","h2", 10000000000, 0, 5, 2, 100)
 
 # addvlan_port(port,D_P,speed_bps,AU,FEC)
 # Vlan and port not P7 process
