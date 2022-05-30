@@ -10,9 +10,10 @@ Options to validate a network topology, including the link metrics, are traditio
 
 ## Requirements
 
-- Git 
-- Python3
-- NetworkX
+- git 
+- python3
+- matplotlib
+- networkX
 
 **Necessary to run compile, run and set P4 code**
 
