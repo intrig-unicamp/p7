@@ -31,4 +31,4 @@ We are members of [INTRIG (Information & Networking Technologies Research & Inno
 
 **P7 project was financed and developed by the National Teaching and Research Network (RNP - Rede Nacional de Ensino e Pesquisa) (https://www.rnp.br/en)**  
 
-Thanks to all [contributors](https://github.com/intrig-unicamp/p7/contributors)!
+Thanks to all [contributors](https://github.com/intrig-unicamp/p7/wiki#team)!
