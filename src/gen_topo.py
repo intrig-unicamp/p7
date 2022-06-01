@@ -18,14 +18,14 @@ import networkx as nx
 import sys
 import re
 import matplotlib.pyplot as plt
-#import PIL
+import PIL
 
 #pre-processing
 lines=""
 
 def gen_topo(lines):
 	lines = str(lines)
-	lines = lines.replace(" ", "")
+	lines = lines.replace(" ", "").replace("'", "")
 	lines = lines[1:-1]
 
 	pattern=r',(?=\[)'
@@ -50,7 +50,7 @@ def gen_topo(lines):
 	link_id = []
 	l = 0
 	for i in range(len(splitted)):
-		temp = str(splitted[i])
+		temp = str(splitted[i]).replace("'", "")
 		temp = temp[1:-1]
 		temp = temp.split(',')
 
@@ -76,8 +76,13 @@ def gen_topo(lines):
 			color_map.append('yellow')
 
 	#add links
-	for link, i in zip(linkSet, range(len(linkSet))):
-		g.add_edge(link[0], link[1], link=('L' + str(link_id[i])))
+	#for link, i in zip(linkSet, range(len(linkSet))):
+		#g.add_edge(link[0], link[1], link=('L' + str(link_id[i])))
+		#print("link: " + str(link[0]) + ", " + str(link[1]))
+
+	for link in linkSet:
+		g.add_edge(link[0], link[1], link=(str(link[0])+"-"+str(link[1])))
+
 
 	colors = [u[1] for u in g.nodes(data="color")]
 	
@@ -85,8 +90,8 @@ def gen_topo(lines):
 
 	nx.draw(g, pos=node_cfg, node_size=1000, node_color=color_map, with_labels = True)
 
-	# edge_labels = nx.get_edge_attributes(g, "link")
-	# nx.draw_networkx_edge_labels(g, pos=node_cfg, edge_labels=edge_labels)
+	edge_labels = nx.get_edge_attributes(g, "link")
+	nx.draw_networkx_edge_labels(g, pos=node_cfg, edge_labels=edge_labels)
 
 	plt.savefig("files/topo.png", format="PNG")
 	
