@@ -29,6 +29,6 @@ For further information, please read our wiki (https://github.com/intrig-unicamp
 ## Team
 We are members of [INTRIG (Information & Networking Technologies Research & Innovation Group)](http://intrig.dca.fee.unicamp.br) at University of Campinas - Unicamp, SP, Brazil and [RNP (Rede Nacional de Ensino e Pesquisa)](https://www.rnp.br/).  
 
-**P7 project was financed and developed by the National Teaching and Research Network (RNP - Rede Nacional de Ensino e Pesquisa) (https://www.rnp.br/en)**  
+**P7 project was supported by and in technical collaboration with the Brazilian National Research and Education Network (RNP - Rede Nacional de Ensino e Pesquisa) (https://www.rnp.br/en)**  
 
 Thanks to all [contributors](https://github.com/intrig-unicamp/p7/wiki#team)!
