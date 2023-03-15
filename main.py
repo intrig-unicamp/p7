@@ -40,13 +40,15 @@ topo.addlink("sw1","h2", 10000000000, 0, 5, 2, 100)
 
 # addvlan_port(port,D_P,speed_bps,AU,FEC)
 # Vlan and port not P7 process
-topo.addvlan_port(6, 168, 100000000000, "False", "False")
-topo.addvlan_port(8, 184, 100000000000, "False", "False")
+topo.addvlan_port("6/-", 168, 100000000000, "False", "False")
+topo.addvlan_port("8/-", 184, 100000000000, "False", "False")
 
 # addvlan_link(D_P1, D_P2, vlan)
 topo.addvlan_link(168,184, 716)
 
 topo.generate_chassis()
+topo.generate_ports()
 topo.generate_p4rt()
+topo.generate_bfrt()
 topo.generate_p4code()
 topo.generate_graph()

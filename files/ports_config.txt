@@ -1,0 +1,21 @@
+ucli
+pm
+port-add 2/0 10G NONE
+port-enb 2/0
+an-set 2/0 2
+port-add 1/2 10G NONE
+port-enb 1/2
+an-set 1/2 2
+port-add 6/- 100G NONE
+port-enb 6/-
+an-set 6/- 2
+port-add 8/- 100G NONE
+port-enb 8/-
+an-set 8/- 2
+port-dis -/-
+port-enb -/-
+show
+exit
+bfrt_python
+tf1.tm.port.sched_shaping.mod(dev_port=136, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
+tf1.tm.port.sched_shaping.mod(dev_port=130, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
