@@ -19,13 +19,14 @@ from src.data import *
 topo = generator('main')
 
 # Stratum ip:port
-topo.addstratum("10.1.1.223:9559")
+# topo.addstratum("10.1.1.223:9559")
 
 # Recirculation port default 68
 topo.addrec_port(68)
 
 # addswitch(name)
 topo.addswitch("sw1")
+topo.addp4("p4src/p7calc.p4")
 
 # addhost(name,port,D_P,speed_bps,AU,FEC,vlan)
 # include the link configuration
@@ -45,6 +46,20 @@ topo.addvlan_port("8/-", 184, 100000000000, "False", "False")
 
 # addvlan_link(D_P1, D_P2, vlan)
 topo.addvlan_link(168,184, 716)
+
+# add table entry
+topo.addtable('sw1','SwitchIngress.calculate')
+topo.addaction('SwitchIngress.operation_add')
+topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
+topo.addactionvalue('value','20')
+topo.insert()
+
+# add table entry
+topo.addtable('sw1','SwitchIngress.calculate')
+topo.addaction('SwitchIngress.operation_xor')
+topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
+topo.addactionvalue('value','15')
+topo.insert()
 
 topo.generate_chassis()
 topo.generate_ports()

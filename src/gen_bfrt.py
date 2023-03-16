@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def generate_bf(hosts, vlans, tableEntries):
+def generate_bf(hosts, vlans, tableEntries, usertables):
     links = []
     
     for j in range(len(hosts)):
@@ -75,6 +75,25 @@ def generate_bf(hosts, vlans, tableEntries):
         f.write("vlan_fwd.add_with_send_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][1]) + ",   port=" + str(vlans[i][0]) + ")\n")
         f.write("\n")
 
+    for i in range(len(usertables)):
+        table = usertables[i][0][0][1].split('.')
+        action = usertables[i][1][0].split('.')
+        f.write(table[1] + " = p4." + table[0] + "." + table[1] + "\n")
+        match = "index= TODO, " # Switch ID
+        for j in range(len(usertables[i][2])):
+            if j == 0:
+                match =  match + usertables[i][2][j][0] + " = " + usertables[i][2][j][1]
+            else:
+                match =  match + ", " + usertables[i][2][j][0] + " = " + usertables[i][2][j][1]
+        for j in range(len(usertables[i][3])):
+            if j == 0:
+                action_value =  usertables[i][3][j][0] + " = " + usertables[i][3][j][1]
+            else:
+                action_value =  action_value + ", " + usertables[i][3][j][0] + " = " + usertables[i][3][j][1]
+        
+        f.write(table[1] + ".add_with_" + action[1] + "(" + match  + ", " +  action_value + ")\n")
+
+    f.write("\n")
     f.write("bfrt.complete_operations()\n")
     f.write("\n")
     f.write("print(\"\"\"\n")

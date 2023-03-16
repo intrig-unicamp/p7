@@ -28,6 +28,7 @@ class generator:
 
 	def __init__(self, name):
 		self.name = name
+		self.p4_code = ''
 		self.stratum_ip = ""
 		self.name_sw = []
 		self.host = []
@@ -38,6 +39,14 @@ class generator:
 		self.vlan_link = []
 		self.rec_port = 68
 
+		#Table
+		self.table_name = []
+		self.intable = 0
+		self.action_name = []
+		self.match = []
+		self.actionvalue = []
+		self.tableinfo = []
+
 	def addstratum(self, ip):
 		self.stratum_ip = ip
 
@@ -46,6 +55,9 @@ class generator:
 
 	def addswitch(self, name):
 		self.name_sw.append(name)
+		
+	def addp4(self, p4):
+		self.p4_code = p4
 
 	def addhost(self, name, port, D_P, speed_bps, AU, FEC, vlan, ip):
 		host_data = [name,port, D_P, speed_bps, AU, FEC, vlan, ip]
@@ -63,6 +75,36 @@ class generator:
 		link_data = [D_P1, D_P2, vlan]
 		self.vlan_link.append(link_data)
 
+	#Table
+	def addtable(self, swith, name):
+		if self.intable == 1:
+			error = "Error in swith " + str(self.table_name[-1][0]) + " table " + str(self.table_name[-1][1])
+			print(error)
+			print("Please end the table entry with insert()")
+			exit()
+		else:
+			table = [swith, name]
+			self.table_name.append(table)
+			self.intable = 1
+
+	def addaction(self, name):
+		self.action_name.append(name)
+
+	def addmatch(self, name, value):
+		match = [name, value]
+		self.match.append(match)
+
+	def addactionvalue(self, name, value):
+		action = [name, value]
+		self.actionvalue.append(action)
+
+	def insert(self):
+		self.intable = 0
+		self.tableinfo.append([self.table_name,self.action_name,self.match,self.actionvalue])
+		self.table_name = []
+		self.action_name = []
+		self.match = []
+		self.actionvalue = []
 
 	def generate_chassis(self):
 		if (len(self.host) == 0):
@@ -153,10 +195,7 @@ class generator:
 
 		print("\nGenrating BFRT file...")
 
-
-		#self.tableEnt, self.tableEnt_dijkstra = generateTableEntries(self.host, self.name_sw, self.link)
-
-		generate_bf(self.host, self.vlan_link, self.tableEnt)
+		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo)
 
 	def generate_p4code(self):
 		if len(self.name_sw) > 0:
