@@ -26,6 +26,8 @@ topo.addrec_port(68)
 
 # addswitch(name)
 topo.addswitch("sw1")
+topo.addswitch("sw2")
+topo.addswitch("sw3")
 topo.addp4("p4src/p7calc.p4")
 
 # addhost(name,port,D_P,speed_bps,AU,FEC,vlan)
@@ -37,7 +39,9 @@ topo.addhost("h2","1/2", 130, 10000000000, "False", "False", 1920, "192.168.0.5"
 # addlink(node1, node2, bw, pkt_loss, latency, jitter, percentage)
 # bw is considered just for the first defined link
 topo.addlink("h1","sw1", 10000000000, 0, 5, 2, 100)
-topo.addlink("sw1","h2", 10000000000, 0, 5, 2, 100)
+topo.addlink("sw1","sw2", 10000000000, 0, 5, 2, 100)
+topo.addlink("sw2","sw3", 10000000000, 0, 5, 2, 100)
+topo.addlink("sw3","h2", 10000000000, 0, 5, 2, 100)
 
 # addvlan_port(port,D_P,speed_bps,AU,FEC)
 # Vlan and port not P7 process

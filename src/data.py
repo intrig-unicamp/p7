@@ -34,6 +34,7 @@ class generator:
 		self.host = []
 		self.link = []
 		self.tableEnt = []
+		self.sw_ids = {}
 		self.tableEnt_dijkstra = []
 		self.vlan_port = []
 		self.vlan_link = []
@@ -55,6 +56,7 @@ class generator:
 
 	def addswitch(self, name):
 		self.name_sw.append(name)
+		self.sw_ids.update({name:(len(self.sw_ids))})
 		
 	def addp4(self, p4):
 		self.p4_code = p4
@@ -175,7 +177,7 @@ class generator:
 		print("\nGenrating P4 RT file...")
 
 
-		self.tableEnt, self.tableEnt_dijkstra = generateTableEntries(self.host, self.name_sw, self.link)
+		self.tableEnt, self.tableEnt_dijkstra = generateTableEntries(self.host, self.name_sw, self.link, self.sw_ids)
 
 		generate_rt(self.stratum_ip, self.host, self.vlan_link, self.tableEnt)
 

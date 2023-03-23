@@ -31,7 +31,7 @@ def editP4(): #put the file names as parameter
 	patternHeaders = "\.*struct\s+headers\s*\{[\s\w;]+ethernet;"
 
 	#rec header
-	rec_header = "header rec_h {\n\tbit<32> ts;\n\tbit<32> jitter;\n\tbit<32> num;\n\tbit<16> sw;\n\tbit<16> ether_type;\n\tPortId_t out_port;\n\tbit<23> flags;\n\tbit<1> signal;\n\tbit<7> pad;\n}\n\n"
+	rec_header = "header rec_h {\n\tbit<32> ts;\n\tbit<32> jitter;\n\tbit<32> num;\n\tbit<16> sw;\n\tbit<16> sw_id\n\tbit<16> ether_type;\n\tPortId_t out_port;\n\tbit<23> flags;\n\tbit<1> signal;\n\tbit<7> pad;\n}\n\n"
 
 	#match
 	matchi = re.search(patternHeaders, allContent)
@@ -112,9 +112,9 @@ def editP4(): #put the file names as parameter
 		b = table.end()
 		newMat = re.finditer(keyMatch, allContent[a:b])
 		for n in newMat:
-			print(n)
+			#print(n)
 			c = n.end()
-			allContent = allContent[0:a+c] + "\n\t\t\t"+hdrName+".rec.sw   : exact;" + allContent[a+c:]
+			allContent = allContent[0:a+c] + "\n\t\t\t"+hdrName+".rec.sw_id   : exact;" + allContent[a+c:]
 
 
 	#--------------- C H A N G E  E G R E S S  P O R T  ---------------

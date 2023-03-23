@@ -45,6 +45,7 @@ header rec_h {
     bit<32> num;
     bit<32> jitter;
     bit<16> sw;
+	bit<16> sw_id;
     bit<16> ether_type;
     bit<32> dest_ip;
     bit<1> signal;
