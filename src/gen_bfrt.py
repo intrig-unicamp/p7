@@ -27,16 +27,26 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
     f = open("./files/bfrt.py", "w")
 
     f.write("from netaddr import IPAddress\n")
-    f.write("p4 = bfrt.p7_default.pipe\n")
+    f.write("p4p7 = bfrt.p7_default.pipe_p7\n")
+    f.write("p4user = bfrt.p7_default." + "pipe" + "\n") # UPDATE TO USER PIPELINE
     f.write("\n")
     f.write("def clear_all(verbose=True, batching=True):\n")
-    f.write("    global p4\n")
+    f.write("    global p4p7\n")
+    f.write("    global p4user\n")
     f.write("    global bfrt\n")
     f.write("\n")
     f.write("    for table_types in (['MATCH_DIRECT', 'MATCH_INDIRECT_SELECTOR'],\n")
     f.write("                        ['SELECTOR'],\n")
     f.write("                        ['ACTION_PROFILE']):\n")
-    f.write("        for table in p4.info(return_info=True, print_info=False):\n")
+    f.write("        for table in p4p7.info(return_info=True, print_info=False):\n")
+    f.write("            if table['type'] in table_types:\n")
+    f.write("                if verbose:\n")
+    f.write("                    print(\"Clearing table {:<40} ... \".\n")
+    f.write("                          format(table['full_name']), end='', flush=True)\n")
+    f.write("                table['node'].clear(batch=batching)\n")
+    f.write("                if verbose:\n")
+    f.write("                    print('Done')\n")
+    f.write("        for table in p4user.info(return_info=True, print_info=False):\n")
     f.write("            if table['type'] in table_types:\n")
     f.write("                if verbose:\n")
     f.write("                    print(\"Clearing table {:<40} ... \".\n")
@@ -49,22 +59,22 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
     f.write("\n")
 
     for i in range(len(hosts)):
-        f.write("vlan_fwd = p4.SwitchIngress.vlan_fwd\n")
+        f.write("vlan_fwd = p4p7.SwitchIngress.vlan_fwd\n")
         f.write("vlan_fwd.add_with_match(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
         f.write("\n")
 
     for i in range(len(hosts)):
-        f.write("arp_fwd = p4.SwitchIngress.arp_fwd\n")
+        f.write("arp_fwd = p4p7.SwitchIngress.arp_fwd\n")
         f.write("arp_fwd.add_with_match_arp(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
         f.write("\n")
 
     for i in range(len(tableEntries)):
         if tableEntries[i][2] == "send_next":
-            f.write("basic_fwd = p4.SwitchIngress.basic_fwd\n")
+            f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
             f.write("basic_fwd.add_with_send_next(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   link_id=" + str(tableEntries[i][3]) + ", sw_id="+ str(tableEntries[i][4]) + ")\n")
             f.write("\n")
         elif tableEntries[i][2] == "send":
-            f.write("basic_fwd = p4.SwitchIngress.basic_fwd\n")
+            f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
             f.write("basic_fwd.add_with_send(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   port=" + str(tableEntries[i][3]) + ")\n")
             f.write("\n")
 
@@ -79,7 +89,7 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
         table = usertables[i][0][0][1].split('.')
         switch = swith_id[usertables[i][0][0][0]]
         action = usertables[i][1][0].split('.')
-        f.write(table[1] + " = p4." + table[0] + "." + table[1] + "\n")
+        f.write(table[1] + " = p4user." + table[0] + "." + table[1] + "\n")
         match = "sw_id= " + str(switch) + ", "# Switch ID
         for j in range(len(usertables[i][2])):
             if j == 0:
