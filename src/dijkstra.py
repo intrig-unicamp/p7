@@ -72,7 +72,6 @@ def findConnectionID(nodeOne, nodeTwo, interconnections, path):
 
 #funcion to generate all table entries to perform the l3 addressing, params: (all hosts, all switches and all interconnections)
 def generateTableEntries(hostsReceived, switchesReceived, intReceived, sw_ids):
-	print(sw_ids)
 	#data structures used in the processment
 	hosts = []
 	hostAndIPs = {}

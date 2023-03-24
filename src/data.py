@@ -23,6 +23,7 @@ from src.gen_bfrt import *
 from src.gen_p4 import *
 from src.gen_topo import *
 from src.dijkstra import *
+from src.parse_p4 import *
 
 class generator:
 
@@ -39,6 +40,7 @@ class generator:
 		self.vlan_port = []
 		self.vlan_link = []
 		self.rec_port = 68
+		self.port_user = 128
 
 		#Table
 		self.table_name = []
@@ -53,6 +55,9 @@ class generator:
 
 	def addrec_port(self, port):
 		self.rec_port = port
+
+	def addrec_port_user(self, port):
+		self.port_user = port
 
 	def addswitch(self, name):
 		self.name_sw.append(name)
@@ -197,7 +202,7 @@ class generator:
 
 		print("\nGenrating BFRT file...")
 
-		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo)
+		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids)
 
 	def generate_p4code(self):
 		if len(self.name_sw) > 0:
@@ -206,8 +211,13 @@ class generator:
 				print("\tAdding Switch %s" % self.name_sw[i])
 
 		print("\nGenrating P4 Code...")
-		generate_p4(self.rec_port, self.name_sw, self.host, self.link)
+		generate_p4(self.rec_port, self.port_user, self.name_sw, self.host, self.link)
 
 	def generate_graph(self):
 		print("\nNetwork Topology created files/topo.png\n")
 		gen_topo(self.tableEnt_dijkstra)
+
+	def parse_usecode(self):
+		print("\nParsing User P4 Code\n")
+		editP4()
+

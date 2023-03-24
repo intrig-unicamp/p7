@@ -23,6 +23,7 @@ topo = generator('main')
 
 # Recirculation port default 68
 topo.addrec_port(68)
+topo.addrec_port_user(128)
 
 # addswitch(name)
 topo.addswitch("sw1")
@@ -54,15 +55,22 @@ topo.addvlan_link(168,184, 716)
 # add table entry
 topo.addtable('sw1','SwitchIngress.calculate')
 topo.addaction('SwitchIngress.operation_add')
-topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
+topo.addmatch('dst_addr','IPAddress(\'192.168.0.3\')')
 topo.addactionvalue('value','20')
 topo.insert()
 
 # add table entry
-topo.addtable('sw1','SwitchIngress.calculate')
+topo.addtable('sw2','SwitchIngress.calculate')
 topo.addaction('SwitchIngress.operation_xor')
-topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
+topo.addmatch('dst_addr','IPAddress(\'192.168.0.2\')')
 topo.addactionvalue('value','15')
+topo.insert()
+
+# add table entry
+topo.addtable('sw3','SwitchIngress.calculate')
+topo.addaction('SwitchIngress.operation_or')
+topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
+topo.addactionvalue('value','10')
 topo.insert()
 
 topo.generate_chassis()
@@ -71,3 +79,4 @@ topo.generate_p4rt()
 topo.generate_bfrt()
 topo.generate_p4code()
 topo.generate_graph()
+topo.parse_usecode()

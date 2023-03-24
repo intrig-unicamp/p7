@@ -17,5 +17,5 @@ port-enb -/-
 show
 exit
 bfrt_python
-tf1.tm.port.sched_shaping.mod(dev_port=136, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
-tf1.tm.port.sched_shaping.mod(dev_port=130, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
+tf1.tm.port.sched_cfg.mod(dev_port=136, max_rate_enable=True)tf1.tm.port.sched_shaping.mod(dev_port=136, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
+tf1.tm.port.sched_cfg.mod(dev_port=130, max_rate_enable=True)tf1.tm.port.sched_shaping.mod(dev_port=130, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)

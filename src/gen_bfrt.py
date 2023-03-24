@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def generate_bf(hosts, vlans, tableEntries, usertables):
+def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
     links = []
     
     for j in range(len(hosts)):
@@ -61,7 +61,7 @@ def generate_bf(hosts, vlans, tableEntries, usertables):
     for i in range(len(tableEntries)):
         if tableEntries[i][2] == "send_next":
             f.write("basic_fwd = p4.SwitchIngress.basic_fwd\n")
-            f.write("basic_fwd.add_with_send_next(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   sw_id=" + str(tableEntries[i][3]) + ")\n")
+            f.write("basic_fwd.add_with_send_next(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   link_id=" + str(tableEntries[i][3]) + ", sw_id="+ str(tableEntries[i][4]) + ")\n")
             f.write("\n")
         elif tableEntries[i][2] == "send":
             f.write("basic_fwd = p4.SwitchIngress.basic_fwd\n")
@@ -77,9 +77,10 @@ def generate_bf(hosts, vlans, tableEntries, usertables):
 
     for i in range(len(usertables)):
         table = usertables[i][0][0][1].split('.')
+        switch = swith_id[usertables[i][0][0][0]]
         action = usertables[i][1][0].split('.')
         f.write(table[1] + " = p4." + table[0] + "." + table[1] + "\n")
-        match = "index= TODO, " # Switch ID
+        match = "sw_id= " + str(switch) + ", "# Switch ID
         for j in range(len(usertables[i][2])):
             if j == 0:
                 match =  match + usertables[i][2][j][0] + " = " + usertables[i][2][j][1]

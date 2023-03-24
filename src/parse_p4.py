@@ -3,15 +3,16 @@ import regex as re
 def editP4(): #put the file names as parameter
 
 	#files used
-	p4_original = 'p7teste.p4' # file name of original user p4 code
+	p4_original = 'p4src/p7calc.p4' # file name of original user p4 code
 	p4_headers = 'hd.p4'  # file name of original headers file
 	p4_parser = 'p7teste.p4'   # file name of original parser file
-	p4_copy = 'p7_copy.p4' # name of regenerated p4 file (all blocks in the same file)
+	p4_copy = 'files/p7calc_mod.p4' # name of regenerated p4 file (all blocks in the same file)
+	user_port = 68
 
 	allContent = "" # content generated
 
 	# read the content from parser file
-	with open(p4_parser, 'r') as parserFile:
+	with open(p4_original, 'r') as parserFile:
 		# read all the file content
 		content = parserFile.read()
 
@@ -133,7 +134,7 @@ def editP4(): #put the file names as parameter
 	st = matchi.start()
 	en = matchi.end()
 
-	allContent = allContent[:ig3.end()+en-1] + "\tig_intr_tm_md.ucast_egress_port = 1;\n\t" + allContent[ig3.end()+en-1:]
+	allContent = allContent[:ig3.end()+en-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+en-1:]
 
 	#--------------- W R I T E  F I N A L  C O D E ---------------
 	

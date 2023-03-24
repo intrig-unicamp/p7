@@ -14,6 +14,7 @@ Options to validate a network topology, including the link metrics, are traditio
 - python3
 - matplotlib
 - networkX
+- regex
 
 **Necessary to run compile, run and set P4 code**
 
