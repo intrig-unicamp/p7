@@ -57,7 +57,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 			# f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		f.write("const bit<32> latency = " + str(links[0][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // latency  - 10000000 - 10ms\n")
-		f.write("const bit<7> percentTax = " + str(links[0][6]*127/100) + ";   // percent*127/100\n")
+		f.write("const bit<7> percentTax = " + str(int(links[0][6]*127/100)) + ";   // percent*127/100\n")
 	else:
 		f.write("const vlan_id_t p7_vlan = 9999;        // vlan for P7\n")
 		f.write("const bit<16> total_sw = 0;         // total number of switches\n")

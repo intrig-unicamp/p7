@@ -18,3 +18,4 @@
 
 cp files/p4rt.py p4src/p4rt/
 cp files/p7_default.p4 p4src/
+cp files/p7calc_mod.p4 p4src/
