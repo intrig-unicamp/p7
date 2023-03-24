@@ -202,7 +202,7 @@ class generator:
 
 		print("\nGenrating BFRT file...")
 
-		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids)
+		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids, self.p4_code)
 
 	def generate_p4code(self):
 		if len(self.name_sw) > 0:

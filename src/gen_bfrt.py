@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
+def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
     links = []
     
     for j in range(len(hosts)):
@@ -26,9 +26,12 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
 
     f = open("./files/bfrt.py", "w")
 
+    user_p4 = user_code.split('/')
+    p4 = user_p4[-1].split('.')
+
     f.write("from netaddr import IPAddress\n")
     f.write("p4p7 = bfrt.p7_default.pipe_p7\n")
-    f.write("p4user = bfrt.p7_default." + "pipe" + "\n") # UPDATE TO USER PIPELINE
+    f.write("p4user = bfrt." + p4[0] + "_mod" +"." + "pipe" + "\n") # UPDATE TO USER PIPELINE
     f.write("\n")
     f.write("def clear_all(verbose=True, batching=True):\n")
     f.write("    global p4p7\n")
@@ -85,8 +88,10 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
         f.write("vlan_fwd.add_with_send_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][1]) + ",   port=" + str(vlans[i][0]) + ")\n")
         f.write("\n")
 
+    table_list = []
     for i in range(len(usertables)):
         table = usertables[i][0][0][1].split('.')
+        table_list.append(table[1]) 
         switch = swith_id[usertables[i][0][0][0]]
         action = usertables[i][1][0].split('.')
         f.write(table[1] + " = p4user." + table[0] + "." + table[1] + "\n")
@@ -104,6 +109,8 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
         
         f.write(table[1] + ".add_with_" + action[1] + "(" + match  + ", " +  action_value + ")\n")
 
+    table_list = [*set(table_list)]
+
     f.write("\n")
     f.write("bfrt.complete_operations()\n")
     f.write("\n")
@@ -116,3 +123,7 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id):
     f.write("arp_fwd.dump(table=True)\n")
     f.write("print (\"Table basic_fwd:\")\n")
     f.write("basic_fwd.dump(table=True)\n")
+
+    for i in range(len(table_list)):
+        f.write("print (\"Table " + table_list[i] + ":\")\n")
+        f.write(table_list[i] + ".dump(table=True)\n")
