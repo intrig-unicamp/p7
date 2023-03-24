@@ -441,9 +441,9 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("         SwitchIngressDeparser(),\n")
 	f.write("         EmptyEgressParser(),\n")
 	f.write("         EmptyEgress(),\n")
-	f.write("         EmptyEgressDeparser()) pipe;\n")
+	f.write("         EmptyEgressDeparser()) pipe_p7;\n")
 	f.write("\n")
-	f.write("Switch(pipe) main;\n")
+	f.write("Switch(pipe_p7) main;\n")
 
 
 	f.close()
