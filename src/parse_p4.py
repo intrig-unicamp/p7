@@ -7,7 +7,7 @@ def editP4(): #put the file names as parameter
 	p4_headers = 'hd.p4'  # file name of original headers file
 	p4_parser = 'p7teste.p4'   # file name of original parser file
 	p4_copy = 'files/p7calc_mod.p4' # name of regenerated p4 file (all blocks in the same file)
-	user_port = 68
+	user_port = 196
 
 	allContent = "" # content generated
 
