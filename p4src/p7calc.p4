@@ -131,20 +131,20 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
 
-    action operation_add(bit<32> value) {
-        hdr.calc.result = hdr.calc.result + value;
+    action operation_add(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl + value;
     }
 
-    action operation_xor(bit<32> value) {
-        hdr.calc.result = hdr.calc.result ^ value;
+    action operation_xor(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl ^ value;
     }
 
-    action operation_and(bit<32> value) {
-        hdr.calc.result = hdr.calc.result & value;
+    action operation_and(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl & value;
     }
 
-    action operation_or(bit<32> value) {
-        hdr.calc.result = hdr.calc.result | value;
+    action operation_or(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl | value;
     }
 
     action drop() {
