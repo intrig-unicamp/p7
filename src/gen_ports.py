@@ -63,7 +63,7 @@ def generate_port(hosts, links, vlans):
 		f.write("exit" + "\n")
 		f.write("bfrt_python" + "\n")
 		for i in range(len(hosts)):
-			f.write("tf1.tm.port.sched_cfg.mod(dev_port=" + str(hosts[i][2]) + ", max_rate_enable=True)")
+			f.write("tf1.tm.port.sched_cfg.mod(dev_port=" + str(hosts[i][2]) + ", max_rate_enable=True)\n")
 			f.write("tf1.tm.port.sched_shaping.mod(dev_port=" + str(hosts[i][2]) + ", unit='BPS', provisioning='MIN_ERROR', max_rate=" + str(int(links[i][2]/1000)) + ", max_burst_size=9000)" + "\n")
 
 	f.close()
