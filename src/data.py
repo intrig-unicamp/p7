@@ -217,7 +217,7 @@ class generator:
 		print("\nNetwork Topology created files/topo.png\n")
 		gen_topo(self.tableEnt_dijkstra)
 
-	def parse_usecode(self):
+	def parse_usercode(self):
 		print("\nParsing User P4 Code\n")
-		editP4()
+		editP4(self.p4_code, self.rec_port)
 

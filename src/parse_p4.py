@@ -1,13 +1,17 @@
 import regex as re
 
-def editP4(): #put the file names as parameter
+def editP4(p4_code, u_port): #put the file names as parameter
 
 	#files used
-	p4_original = 'p4src/p7calc.p4' # file name of original user p4 code
-	p4_headers = 'hd.p4'  # file name of original headers file
-	p4_parser = 'p7teste.p4'   # file name of original parser file
-	p4_copy = 'files/p7calc_mod.p4' # name of regenerated p4 file (all blocks in the same file)
-	user_port = 196
+	p4_original = p4_code # file name of original user p4 code
+	p4_name = p4_original.split(".")
+	if p4_name[0].find('/') != -1:
+		p4_copy = p4_name[0].split("/")
+		p4_copy = "files/" + p4_copy[-1] + "_mod.p4"
+	else:
+		p4_copy = "files/" + p4_name[0] + "_mod.p4"
+
+	user_port = u_port
 
 	allContent = "" # content generated
 
@@ -23,17 +27,14 @@ def editP4(): #put the file names as parameter
 		# read all the file content
 		content = tablesFile.read()
 
-	
-	##allContent = allContent + content #commented now
-
 	#--------------- C H A N G E  H E A D E R S ---------------
 	
 	# regex expression for match with header definitions
 	patternHeaders = "\.*struct\s+headers\s*\{[\s\w;]+ethernet;"
 
 	#rec header
-#	rec_header = "header rec_h {\n\tbit<32> ts;\n\tbit<32> jitter;\n\tbit<32> num;\n\tbit<16> sw;\n\tbit<16> sw_id\n\tbit<16> ether_type;\n\tPortId_t out_port;\n\tbit<23> flags;\n\tbit<1> signal;\n\tbit<7> pad;\n}\n\n"
 	rec_header = "header rec_h {\n\tbit<32> ts;\n\tbit<32> num;\n\tbit<32> jitter;\n\tbit<16> sw;\n\tbit<16> sw_id;\n\tbit<16> ether_type;\n\tbit<32> dest_ip;\n\tbit<1> signal;\n\tbit<31> pad;\n}\n\n"
+	
 	#match
 	matchi = re.search(patternHeaders, allContent)
 	st = matchi.start()
@@ -45,21 +46,17 @@ def editP4(): #put the file names as parameter
 	#--------------- C H A N G E  P A R S E R ---------------
 
 	# Regex expressions for parser
-	
 	patternEthernetFull = r'state\s+parse_ethernet\s*\{(?:[^{}]*{[^{}]*}[^{}]*|[^{}]+)*\}' # state start with multiple {} blocks
-	
 	patternEthernet = '\.*state\s+parse_ethernet\s*\{' # state start with multiple {} blocks
 	patternTransitionStart = '\.*transition\s+select\([\w.]+\)\s*\{'
 	add = "\n\t\t\t16w0x9966:   parse_rec;\n"
 
-	
 	transitionOptions = 0
 
 	ethers = re.finditer(patternEthernet, allContent)
 	for eth in ethers:
 		ethStart = eth.start()
 		ethFinal = eth.end()
-
 
 		matchess = re.search(patternTransitionStart, allContent[ethFinal:])
 		
@@ -68,27 +65,12 @@ def editP4(): #put the file names as parameter
 
 		transitionContent = allContent[ethFinal+a+1:ethFinal+a+b+1]
 
-
-		allContent = allContent[:ethFinal+a+1] + add + allContent[ethFinal+a:]
-
-		
-		
-		
+		allContent = allContent[:ethFinal+a+1] + add + allContent[ethFinal+a:]		
 
 		#new state to parser rec header
 		newState = "\n\tstate parse_rec { \n\t\tpacket.extract(hdr.rec);\n\t\ttransition select(hdr.rec.ether_type){\n"+ transitionContent   +"\n\t}\n"
-		
 		aux = re.search(patternEthernetFull, allContent[a-2:])
-
 		allContent = allContent[:a-2+aux.end()+1] + newState +allContent[a-2+aux.end()+1:]
-		
-
-
-
-
-
-		
-
 
 	#--------------- C H A N G E  T A B L E S ---------------
 
@@ -117,7 +99,6 @@ def editP4(): #put the file names as parameter
 			c = n.end()
 			allContent = allContent[0:a+c] + "\n\t\t\t"+hdrName+".rec.sw_id   : exact;" + allContent[a+c:]
 
-
 	#--------------- C H A N G E  E G R E S S  P O R T  ---------------
 	
 	#regex expression for match and change apply block
@@ -142,5 +123,3 @@ def editP4(): #put the file names as parameter
 	with open(p4_copy, 'w') as new_file:
 		# write the data
 		new_file.write(allContent)
-
-editP4()

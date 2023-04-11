@@ -42,8 +42,6 @@ topo.addhost("h4","1/2", 130, 10000000000, "False", "False", 1920, "192.168.0.3"
 
 # addlink(node1, node2, bw, pkt_loss, latency, jitter, percentage)
 # bw is considered just for the first defined link
-#topo.addlink("h1","sw1", 10000000000, 0, 0, 0, 100)
-#topo.addlink("sw1","h2", 10000000000, 0, 0, 0, 100)
 topo.addlink("h1","sw1", 10000000000, 0, 0, 0, 100)
 topo.addlink("h2","sw2", 10000000000, 0, 0, 0, 100)
 topo.addlink("h3","sw3", 10000000000, 0, 0, 0, 100)
@@ -161,25 +159,11 @@ topo.addactionvalue('value','23')
 topo.insert()
 
 
-
-# add table entry
-#topo.addtable('sw2','SwitchIngress.calculate')
-#topo.addaction('SwitchIngress.operation_xor')
-#topo.addmatch('dst_addr','IPAddress(\'192.168.0.2\')')
-#topo.addactionvalue('value','15')
-#topo.insert()
-
-# add table entry
-#topo.addtable('sw3','SwitchIngress.calculate')
-#topo.addaction('SwitchIngress.operation_or')
-#topo.addmatch('dst_addr','IPAddress(\'192.168.0.1\')')
-#topo.addactionvalue('value','10')
-#topo.insert()
-
+#Generate files
 topo.generate_chassis()
 topo.generate_ports()
 topo.generate_p4rt()
 topo.generate_bfrt()
 topo.generate_p4code()
 topo.generate_graph()
-topo.parse_usecode()
+topo.parse_usercode()
