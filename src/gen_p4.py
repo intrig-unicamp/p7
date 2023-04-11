@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def generate_p4(rec_port, name_sw, hosts, links):
+def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f = open("./files/p7_default.p4", "w")
 
 	# License
@@ -52,11 +52,12 @@ def generate_p4(rec_port, name_sw, hosts, links):
 		f.write("const bit<16> total_sw = " + str(len(name_sw)) + ";         // total number of switches\n")
 		f.write("const bit<10> pkt_loss = " + str(hex(int(round(10.2*links[0][3])))) + ";       // packet loss  - 0xCC - 240 - 20%\n")
 		f.write("const PortId_t rec_port = " + str(rec_port) + ";       // recirculation port\n")
+		f.write("const PortId_t port_user = " + str(port_user) + ";       // recirculation port\n")
 		# for i in range(len(links)):
 			# f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		f.write("const bit<32> latency = " + str(links[0][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // latency  - 10000000 - 10ms\n")
-		f.write("const bit<7> percentTax = " + str(links[0][6]*127/100) + ";   // percent*127/100\n")
+		f.write("const bit<7> percentTax = " + str(int(links[0][6]*127/100)) + ";   // percent*127/100\n")
 	else:
 		f.write("const vlan_id_t p7_vlan = 9999;        // vlan for P7\n")
 		f.write("const bit<16> total_sw = 0;         // total number of switches\n")
@@ -227,11 +228,12 @@ def generate_p4(rec_port, name_sw, hosts, links):
 	f.write("    // Send packet to the next internal switch \n")
 	f.write("    // Reset the initial timestamp\n")
 	f.write("    // Increase the ID of the switch\n")
-	f.write("    action send_next(bit<16> sw_id) {\n")
+	f.write("    action send_next(bit<16> link_id, bit<16> sw_id) {\n")
 	f.write("        hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];\n")
 	f.write("        hdr.rec.num = 1;\n")
-	f.write("        hdr.rec.sw = sw_id;\n")
-	f.write("        ig_intr_tm_md.ucast_egress_port = rec_port;\n")
+	f.write("        hdr.rec.sw = link_id;\n")
+	f.write("        hdr.rec.sw_id = sw_id;\n")
+	f.write("        ig_intr_tm_md.ucast_egress_port = port_user;\n")
 	f.write("    }\n")
 	f.write("\n")
 	f.write("    // Forward a packet directly without any P7 processing\n")
@@ -276,8 +278,8 @@ def generate_p4(rec_port, name_sw, hosts, links):
 	f.write("        hdr.rec.ether_type = hdr.ethernet.ether_type;\n")
 	f.write("        hdr.vlan_tag.vid = p7_vlan;\n")
 	f.write("\n")
-	f.write("	 hdr.rec.jitter = md.jitter_metadata;\n")
-	f.write("	 hdr.rec.signal = md.signal_metadata;\n")
+	f.write("        hdr.rec.jitter = md.jitter_metadata;\n")
+	f.write("        hdr.rec.signal = md.signal_metadata;\n")
 	f.write("\n")
 	f.write("        hdr.ethernet.ether_type = 0x9966;\n")
 	f.write("        //hdr.ethernet.src_addr = 0x000000000000;\n")
@@ -296,8 +298,8 @@ def generate_p4(rec_port, name_sw, hosts, links):
 	f.write("        hdr.rec.ether_type = hdr.ethernet.ether_type;\n")
 	f.write("        hdr.vlan_tag.vid = p7_vlan;\n")
 	f.write("\n")
-	f.write("	 hdr.rec.jitter = md.jitter_metadata;\n")
-	f.write("	 hdr.rec.signal = md.signal_metadata;\n")
+	f.write("        hdr.rec.jitter = md.jitter_metadata;\n")
+	f.write("        hdr.rec.signal = md.signal_metadata;\n")
 	f.write("\n")
 	f.write("        hdr.ethernet.ether_type = 0x9966;\n")
 	f.write("\n")
@@ -439,9 +441,9 @@ def generate_p4(rec_port, name_sw, hosts, links):
 	f.write("         SwitchIngressDeparser(),\n")
 	f.write("         EmptyEgressParser(),\n")
 	f.write("         EmptyEgress(),\n")
-	f.write("         EmptyEgressDeparser()) pipe;\n")
+	f.write("         EmptyEgressDeparser()) pipe_p7;\n")
 	f.write("\n")
-	f.write("Switch(pipe) main;\n")
+	f.write("Switch(pipe_p7) main;\n")
 
 
 	f.close()

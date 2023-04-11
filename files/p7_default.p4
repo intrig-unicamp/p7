@@ -24,12 +24,13 @@
  ************* C O N S T A N T S    A N D   T Y P E S  *******************
 **************************************************************************/
 const vlan_id_t p7_vlan = 1920;        // vlan for P7
-const bit<16> total_sw = 1;         // total number of switches
+const bit<16> total_sw = 3;         // total number of switches
 const bit<10> pkt_loss = 0x0;       // packet loss  - 0xCC - 240 - 20%
 const PortId_t rec_port = 68;       // recirculation port
+const PortId_t port_user = 128;       // recirculation port
 const bit<32> latency = 5000000;   // latency  - 10000000 - 10ms
 const bit<32> constJitter = 2000000;   // latency  - 10000000 - 10ms
-const bit<7> percentTax = 127;   // percent*127/100
+const bit<7> percentTax = 127.0;   // percent*127/100
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
@@ -170,11 +171,12 @@ control SwitchIngress(
     // Send packet to the next internal switch 
     // Reset the initial timestamp
     // Increase the ID of the switch
-    action send_next(bit<16> sw_id) {
+    action send_next(bit<16> link_id, bit<16> sw_id) {
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
-        hdr.rec.sw = sw_id;
-        ig_intr_tm_md.ucast_egress_port = rec_port;
+        hdr.rec.sw = link_id;
+        hdr.rec.sw_id = sw_id;
+        ig_intr_tm_md.ucast_egress_port = port_user;
     }
 
     // Forward a packet directly without any P7 processing
@@ -219,8 +221,8 @@ control SwitchIngress(
         hdr.rec.ether_type = hdr.ethernet.ether_type;
         hdr.vlan_tag.vid = p7_vlan;
 
-	 hdr.rec.jitter = md.jitter_metadata;
-	 hdr.rec.signal = md.signal_metadata;
+        hdr.rec.jitter = md.jitter_metadata;
+        hdr.rec.signal = md.signal_metadata;
 
         hdr.ethernet.ether_type = 0x9966;
         //hdr.ethernet.src_addr = 0x000000000000;
@@ -238,8 +240,8 @@ control SwitchIngress(
         hdr.rec.ether_type = hdr.ethernet.ether_type;
         hdr.vlan_tag.vid = p7_vlan;
 
-	 hdr.rec.jitter = md.jitter_metadata;
-	 hdr.rec.signal = md.signal_metadata;
+        hdr.rec.jitter = md.jitter_metadata;
+        hdr.rec.signal = md.signal_metadata;
 
         hdr.ethernet.ether_type = 0x9966;
 
@@ -346,6 +348,52 @@ control SwitchIngress(
                     }   
                 }
                 else if (hdr.rec.sw == 1){                   // 0 - ID switch
+                    bit<8> value_tscal;
+                    md.ts_diff = 0;
+                    comp_diff();
+    		     //apply the jitter
+		     if(hdr.rec.signal==0){
+		         apply_more_jitter();
+      		     }else{
+   		         if(ax_action.execute(1)==1)
+		     	     apply_less_jitter();
+		     }
+                    value_tscal = tscal_action.execute(1);
+                    if (value_tscal == 1){
+                        bit<10> R = rnd.get();
+                        if (R >= pkt_loss) {            // @2-% of pkt loss 
+                            basic_fwd.apply();
+                        }else{
+                            drop();
+                        } 
+                    }else {
+                        recirculate(rec_port);          // Recirculation port (e.g., loopback interface)
+                    }   
+                }
+                else if (hdr.rec.sw == 2){                   // 0 - ID switch
+                    bit<8> value_tscal;
+                    md.ts_diff = 0;
+                    comp_diff();
+    		     //apply the jitter
+		     if(hdr.rec.signal==0){
+		         apply_more_jitter();
+      		     }else{
+   		         if(ax_action.execute(1)==1)
+		     	     apply_less_jitter();
+		     }
+                    value_tscal = tscal_action.execute(1);
+                    if (value_tscal == 1){
+                        bit<10> R = rnd.get();
+                        if (R >= pkt_loss) {            // @2-% of pkt loss 
+                            basic_fwd.apply();
+                        }else{
+                            drop();
+                        } 
+                    }else {
+                        recirculate(rec_port);          // Recirculation port (e.g., loopback interface)
+                    }   
+                }
+                else if (hdr.rec.sw == 3){                   // 0 - ID switch
                     bit<8> value_tscal;
                     md.ts_diff = 0;
                     comp_diff();

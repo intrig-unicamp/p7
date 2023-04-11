@@ -71,8 +71,7 @@ def findConnectionID(nodeOne, nodeTwo, interconnections, path):
 			return i[2]
 
 #funcion to generate all table entries to perform the l3 addressing, params: (all hosts, all switches and all interconnections)
-def generateTableEntries(hostsReceived, switchesReceived, intReceived):
-	
+def generateTableEntries(hostsReceived, switchesReceived, intReceived, sw_ids):
 	#data structures used in the processment
 	hosts = []
 	hostAndIPs = {}
@@ -152,10 +151,10 @@ def generateTableEntries(hostsReceived, switchesReceived, intReceived):
 			ID = findConnectionID(node, node+1, interconnections, path)
 			IDprevious = findConnectionID(node-1, node, interconnections, path)
 			IDnext = findConnectionID(node+1, node+2, interconnections, path)
-			entry = [ID, ipStart, "send_next", IDprevious]
+			entry = [ID, ipStart, "send_next", IDprevious, sw_ids[path[node]]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
-			entry = [ID, ipFinal, "send_next", IDnext]
+			entry = [ID, ipFinal, "send_next", IDnext, sw_ids[path[node +1]]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
 
@@ -176,7 +175,7 @@ def generateTableEntries(hostsReceived, switchesReceived, intReceived):
 			entry = [IDst, ipStart, "send", pysPorts[hStart]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
-			entry = [IDst, ipFinal, "send_next", IDdest]
+			entry = [IDst, ipFinal, "send_next", IDdest, sw_ids[path[1]]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
 			#creathe the entry for the final host
@@ -185,11 +184,12 @@ def generateTableEntries(hostsReceived, switchesReceived, intReceived):
 			entry = [IDst, ipFinal, "send", pysPorts[hFinal]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
-			entry = [IDst, ipStart, "send_next", IDdest]
+			entry = [IDst, ipStart, "send_next", IDdest, sw_ids[path[len(path)-2]]]
 			if entry not in tableEntries:
 				tableEntries.append(entry)
-
+	#2 1 1 0 2 0
 	#return all table entries
+	#print(tableEntries)
 	return tableEntries, allPathes
 
 

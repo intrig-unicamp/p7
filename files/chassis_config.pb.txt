@@ -36,9 +36,9 @@ singleton_ports {
 }
 singleton_ports {
   id: 168
-  name: "6/0"
+  name: "6/-/0"
   slot: 1
-  port: 6
+  port: 6/-
   speed_bps: 100000000000
   config_params {
     admin_state: ADMIN_STATE_ENABLED
@@ -48,9 +48,9 @@ singleton_ports {
 }
 singleton_ports {
   id: 184
-  name: "8/0"
+  name: "8/-/0"
   slot: 1
-  port: 8
+  port: 8/-
   speed_bps: 100000000000
   config_params {
     admin_state: ADMIN_STATE_ENABLED
