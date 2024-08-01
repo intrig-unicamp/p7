@@ -53,15 +53,14 @@ header calc_h {
 
 header rec_h {
 	bit<32> ts;
-	bit<32> jitter;
 	bit<32> num;
+	bit<32> jitter;
 	bit<16> sw;
-	bit<16> sw_id
+	bit<16> sw_id;
 	bit<16> ether_type;
-	PortId_t out_port;
-	bit<23> flags;
+	bit<32> dest_ip;
 	bit<1> signal;
-	bit<7> pad;
+	bit<31> pad;
 }
 
 struct headers {
@@ -109,7 +108,7 @@ parser SwitchIngressParser(
         }
     }
 
-	state rec { 
+	state parse_rec { 
 		packet.extract(hdr.rec);
 		transition select(hdr.rec.ether_type){
             ETHERTYPE_IPV4:  parse_ipv4;
@@ -157,20 +156,20 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
 
-    action operation_add(bit<32> value) {
-        hdr.calc.result = hdr.calc.result + value;
+    action operation_add(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl + value;
     }
 
-    action operation_xor(bit<32> value) {
-        hdr.calc.result = hdr.calc.result ^ value;
+    action operation_xor(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl ^ value;
     }
 
-    action operation_and(bit<32> value) {
-        hdr.calc.result = hdr.calc.result & value;
+    action operation_and(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl & value;
     }
 
-    action operation_or(bit<32> value) {
-        hdr.calc.result = hdr.calc.result | value;
+    action operation_or(bit<8> value) {
+        hdr.ipv4.ttl = hdr.ipv4.ttl | value;
     }
 
     action drop() {
@@ -197,8 +196,8 @@ control SwitchIngress(
     apply {
         calculate.apply();
         ig_intr_tm_md.bypass_egress = 1w1;
-    	ig_intr_tm_md.ucast_egress_port = 68;
-	}
+   	ig_intr_tm_md.ucast_egress_port = 196;
+	 }
 }
 
 
