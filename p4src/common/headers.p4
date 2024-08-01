@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2022 INTRIG
+ * Copyright 2024 INTRIG
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ header rec_h {
     bit<32> num;
     bit<32> jitter;
     bit<16> sw;
-	bit<16> sw_id;
+    bit<16> sw_id;
     bit<16> ether_type;
     bit<32> dest_ip;
     bit<1> signal;
@@ -172,6 +172,14 @@ struct header_t {
     rec_h rec;
 
     // Add more headers here.
+}
+
+struct headers {
+    ethernet_h   ethernet;
+    rec_h        rec;
+    vlan_tag_h   vlan_tag;
+    arp_h   arp;
+    ipv4_h       ipv4;
 }
 
 struct empty_header_t {}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2022 INTRIG
+ * Copyright 2024 INTRIG
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #ifndef _UTIL_
 #define _UTIL_
+
+#include "headers.p4"
 
 parser TofinoIngressParser(
         packet_in pkt,
@@ -70,30 +72,45 @@ control BypassEgress(inout ingress_intrinsic_metadata_for_tm_t ig_tm_md) {
 // Empty egress parser/control blocks
 parser EmptyEgressParser(
         packet_in pkt,
-        out empty_header_t hdr,
+        out headers hdr,
         out empty_metadata_t eg_md,
         out egress_intrinsic_metadata_t eg_intr_md) {
     state start {
+        pkt.extract(eg_intr_md);
+        pkt.extract(hdr.ethernet);
         transition accept;
     }
 }
 
 control EmptyEgressDeparser(
         packet_out pkt,
-        inout empty_header_t hdr,
+        inout headers hdr,
         in empty_metadata_t eg_md,
         in egress_intrinsic_metadata_for_deparser_t ig_intr_dprs_md) {
-    apply {}
+    apply {
+        pkt.emit(hdr);
+    }
 }
 
 control EmptyEgress(
-        inout empty_header_t hdr,
+        inout headers hdr,
         inout empty_metadata_t eg_md,
         in egress_intrinsic_metadata_t eg_intr_md,
         in egress_intrinsic_metadata_from_parser_t eg_intr_md_from_prsr,
         inout egress_intrinsic_metadata_for_deparser_t ig_intr_dprs_md,
         inout egress_intrinsic_metadata_for_output_port_t eg_intr_oport_md) {
-    apply {}
+    
+    Register <bit<16>, _> (32w1)  val;
+
+    RegisterAction<bit<16>, bit<16>, bit<16>>(val) val_update_action = {
+        void apply(inout bit<16> value){
+            value = value + 1;
+        }
+    };
+
+    apply {
+        val_update_action.execute(0);
+    }
 }
 
 #endif /* _UTIL */
