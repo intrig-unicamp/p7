@@ -24,6 +24,8 @@ from src.gen_p4 import *
 from src.gen_topo import *
 from src.dijkstra import *
 from src.parse_p4 import *
+from src.gen_setfiles import * 
+from src.gen_multiple import * 
 
 class generator:
 
@@ -49,6 +51,11 @@ class generator:
 		self.match = []
 		self.actionvalue = []
 		self.tableinfo = []
+
+		#Mirror
+		self.mirrorinfo = []
+		self.inmirror = 0
+		self.mirror_config = []
 
 	def addstratum(self, ip):
 		self.stratum_ip = ip
@@ -94,6 +101,18 @@ class generator:
 			self.table_name.append(table)
 			self.intable = 1
 
+	#Mirror
+	def addmirror(self, stype, sid, direction, session_enable, ucast_egress_port, ucast_egress_port_valid, max_pkt_len):
+		if self.inmirror == 1:
+			error = "Error in mirror configuration"
+			print(error)
+			print("Please end the mirror entry with push()")
+			exit()
+		else:
+			config = [stype, sid, direction, session_enable, ucast_egress_port, ucast_egress_port_valid, max_pkt_len]
+			self.mirror_config.append(config)
+			self.inmirror = 1
+
 	def addaction(self, name):
 		self.action_name.append(name)
 
@@ -112,6 +131,11 @@ class generator:
 		self.action_name = []
 		self.match = []
 		self.actionvalue = []
+
+	def push(self):
+		self.inmirror = 0
+		self.mirrorinfo.append([self.mirror_config])
+		self.mirror_config = []
 
 	def generate_chassis(self):
 		if (len(self.host) == 0):
@@ -202,7 +226,7 @@ class generator:
 
 		print("\nGenrating BFRT file...")
 
-		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids, self.p4_code)
+		generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids, self.p4_code, self.mirrorinfo)
 
 	def generate_p4code(self):
 		if len(self.name_sw) > 0:
@@ -219,5 +243,15 @@ class generator:
 
 	def parse_usercode(self):
 		print("\nParsing User P4 Code\n")
-		editP4(self.p4_code, self.rec_port)
+		if (self.p4_code != ''):
+			editP4(self.p4_code, self.rec_port)
+		else:
+			print("\nNo P4 Code defined\n")
 
+	def generate_setfiles(self):
+		print("\nGenerating set_files configuration...\n")
+		gen_set_files(self.p4_code)
+
+	def generate_multiprogram(self):
+		print("\nGenerating multiprogram Code\n")
+		gen_multiple(self.p4_code)
