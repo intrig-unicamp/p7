@@ -1,5 +1,5 @@
  ################################################################################
- # Copyright 2022 INTRIG
+ # Copyright 2024 INTRIG
  #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -78,14 +78,14 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	# Headers structure is defined in common/headers.p4
 	f.write("/***********************  H E A D E R S  ************************/\n")
 	f.write("\n")
-	f.write("struct headers {\n")
-	f.write("    ethernet_h   ethernet;\n")
-	f.write("    rec_h        rec;\n")
-	f.write("    vlan_tag_h   vlan_tag;\n")
-	f.write("    arp_h   arp;\n")
-	f.write("    ipv4_h       ipv4;\n")
-	f.write("}\n")
-	f.write("\n")
+#	f.write("struct headers {\n")
+#	f.write("    ethernet_h   ethernet;\n")
+#	f.write("    rec_h        rec;\n")
+#	f.write("    vlan_tag_h   vlan_tag;\n")
+#	f.write("    arp_h   arp;\n")
+#	f.write("    ipv4_h       ipv4;\n")
+#	f.write("}\n")
+#	f.write("\n")
 	f.write("struct my_ingress_metadata_t {\n")
 	f.write("    bit<32>  ts_diff;\n")
 	f.write("    bit<32>  jitter_metadata;\n")
@@ -307,6 +307,10 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("        ig_intr_tm_md.bypass_egress = 1w1;\n")
 	f.write("    }\n")
 
+	f.write("\n")
+	f.write("    action match_arp_direct(PortId_t port) {\n")
+	f.write("        ig_intr_tm_md.ucast_egress_port = port;\n")
+	f.write("    }\n")
 
 	f.write("\n")
 	f.write("    // Table perform l2 forward\n")
@@ -352,6 +356,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("        }\n")
 	f.write("        actions = {\n")
 	f.write("            match_arp;\n")
+	f.write("            match_arp_direct;\n")
 	f.write("            @defaultonly drop;\n")
 	f.write("        }\n")
 	f.write("        const default_action = drop();\n")

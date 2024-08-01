@@ -1,5 +1,5 @@
  ################################################################################
- # Copyright 2022 INTRIG
+ # Copyright 2024 INTRIG
  #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -64,6 +64,9 @@ def generate_port(hosts, links, vlans):
 		f.write("bfrt_python" + "\n")
 		for i in range(len(hosts)):
 			f.write("tf1.tm.port.sched_cfg.mod(dev_port=" + str(hosts[i][2]) + ", max_rate_enable=True)\n")
-			f.write("tf1.tm.port.sched_shaping.mod(dev_port=" + str(hosts[i][2]) + ", unit='BPS', provisioning='MIN_ERROR', max_rate=" + str(int(links[i][2]/1000)) + ", max_burst_size=9000)" + "\n")
+			if (len(links) > 1):
+				f.write("tf1.tm.port.sched_shaping.mod(dev_port=" + str(hosts[i][2]) + ", unit='BPS', provisioning='MIN_ERROR', max_rate=" + str(int(links[i][2]/1000)) + ", max_burst_size=9000)" + "\n")
+			else:
+				f.write("tf1.tm.port.sched_shaping.mod(dev_port=" + str(hosts[i][2]) + ", unit='BPS', provisioning='MIN_ERROR', max_rate=" + str(int(links[0][2]/1000)) + ", max_burst_size=9000)" + "\n")
 
 	f.close()

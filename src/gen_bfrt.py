@@ -1,5 +1,5 @@
  ################################################################################
- # Copyright 2023 INTRIG
+ # Copyright 2024 INTRIG
  #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
+def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mirror):
     links = []
     
     for j in range(len(hosts)):
@@ -32,6 +32,7 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
     f.write("from netaddr import IPAddress\n")
     f.write("p4p7 = bfrt.p7_default.pipe_p7\n")
     f.write("p4user = bfrt." + p4[0] + "_mod" +"." + "pipe" + "\n") # UPDATE TO USER PIPELINE
+    f.write("p4mirror = bfrt.mirror\n")
     f.write("\n")
     f.write("def clear_all(verbose=True, batching=True):\n")
     f.write("    global p4p7\n")
@@ -88,6 +89,12 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
         f.write("vlan_fwd.add_with_send_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][1]) + ",   port=" + str(vlans[i][0]) + ")\n")
         f.write("\n")
 
+        f.write("arp_fwd = p4p7.SwitchIngress.arp_fwd\n")
+        f.write("arp_fwd.add_with_match_arp_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][0]) + ",   port=" + str(vlans[i][1]) + ")\n")
+        f.write("arp_fwd.add_with_match_arp_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][1]) + ",   port=" + str(vlans[i][0]) + ")\n")
+        f.write("\n")
+    f.write("\n")
+
     table_list = []
     for i in range(len(usertables)):
         table = usertables[i][0][0][1].split('.')
@@ -108,10 +115,21 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
                 action_value =  action_value + ", " + usertables[i][3][j][0] + " = " + usertables[i][3][j][1]
         
         f.write(table[1] + ".add_with_" + action[1] + "(" + match  + ", " +  action_value + ")\n")
-
+    f.write("\n")
     table_list = [*set(table_list)]
 
+    for i in range(len(mirror)):
+        mirror_type = mirror[i][0][0][0]
+        sid = mirror[i][0][0][1]
+        direction = mirror[i][0][0][2]
+        session_enable = mirror[i][0][0][3]
+        ucast_egress_port = mirror[i][0][0][4]
+        ucast_egress_port_valid = mirror[i][0][0][5]
+        max_pkt_len = mirror[i][0][0][6]
+        f.write("mirror = " + "p4mirror." + "cfg" + "\n")
+        f.write("mirror" + ".entry_with_" + mirror_type  + "(" +  "sid=" + str(sid) + ", " +  "direction=\'" + direction +  "\', " +  "session_enable=" + session_enable + ", " +  "ucast_egress_port=" + str(ucast_egress_port) + ", " +  "ucast_egress_port_valid=" + str(ucast_egress_port_valid) + ", " +  "max_pkt_len=" +  str(max_pkt_len) + ").push()\n")
     f.write("\n")
+
     f.write("bfrt.complete_operations()\n")
     f.write("\n")
     f.write("print(\"\"\"\n")
@@ -127,3 +145,6 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code):
     for i in range(len(table_list)):
         f.write("print (\"Table " + table_list[i] + ":\")\n")
         f.write(table_list[i] + ".dump(table=True)\n")
+
+    f.write("print (\"Mirror:\")\n")
+    f.write("p4mirror" + ".dump()\n")

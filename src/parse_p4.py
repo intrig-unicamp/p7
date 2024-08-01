@@ -1,4 +1,39 @@
+ ################################################################################
+ # Copyright 2024 INTRIG
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+ # You may obtain a copy of the License at
+ #
+ #     http://www.apache.org/licenses/LICENSE-2.0
+ #
+ # Unless required by applicable law or agreed to in writing, software
+ # distributed under the License is distributed on an "AS IS" BASIS,
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ ################################################################################
+
 import regex as re
+
+
+def encontrar_chave(string):
+    penultimo = 0
+    contador = 0
+    for match in re.finditer(r'{|}', string):
+        if match.group() == '{':
+            contador += 1
+        elif match.group() == '}':
+            if contador == 0:
+                return penultimo
+            else:
+                penultimo = match.start()
+                contador -= 1
+    return None
+
+
+
+
 
 def editP4(p4_code, u_port): #put the file names as parameter
 
@@ -29,6 +64,8 @@ def editP4(p4_code, u_port): #put the file names as parameter
 
 	#--------------- C H A N G E  H E A D E R S ---------------
 	
+	#OBS: adicionar suporte ao //
+
 	# regex expression for match with header definitions
 	patternHeaders = "\.*struct\s+headers\s*\{[\s\w;]+ethernet;"
 
@@ -103,19 +140,41 @@ def editP4(p4_code, u_port): #put the file names as parameter
 	
 	#regex expression for match and change apply block
 	patternApply = r'apply\s*\{(?:[^{}]*\{(?:[^{}]*\{[^{}]*\}[^{}]*|[^{}]+)*\}[^{}]*|[^{}]+)*\}' # exp to identify apply block
+	
+	#testing
+	#patternApply = r'apply\s*\{\n*\t*((\t.*\n)|(^$\n))*^\}'
+
+
+
+
+
+
+
+
 
 	ingressProcess1 = "\.*Pipeline[\w\s(]+\)\s*,\s*"
 	y = re.search(ingressProcess1, allContent)
 	
 	ig2 = re.match("\w+", allContent[y.end():]).group()
 
-	ig3 = re.search("\.*control\s+"+ig2+"\s*\(", allContent)
+	ig3 = re.search("\.*control\s+"+ig2+"\s*\([\s\S]*?\)\s*\{", allContent)
 
 	matchi = re.search(patternApply, allContent[ig3.end():])
+
+
+	mm = encontrar_chave(allContent[ig3.end()+1:])
+
+	#print("posiÃ§ao da")	
+	#print(mm)
+
+
 	st = matchi.start()
 	en = matchi.end()
 
-	allContent = allContent[:ig3.end()+en-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+en-1:]
+	allContent = allContent[:ig3.end()+1 + mm-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+1 + mm-1:]	
+
+	
+	#allContent = allContent[:ig3.end()+en-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+en-1:]
 
 	#--------------- W R I T E  F I N A L  C O D E ---------------
 	
