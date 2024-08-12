@@ -51,11 +51,24 @@ header calc_h {
     bit<32> result;
 }
 
+header arp_h {
+    bit<16> hw_type;
+    bit<16> proto_type;
+    bit<8> hw_addr_len;
+    bit<8> proto_addr_len;
+    bit<16> opcode;
+    bit<48> hwSrcAddr;
+    bit<32> protoSrcAddr;
+    bit<48> hwDstAddr;
+    bit<32> dest_ip;
+}
+
 struct headers {
     ethernet_h   ethernet;
     vlan_tag_h   vlan_tag;
     ipv4_h       ipv4;
     calc_h       calc;
+    arp_h   arp;
 }
 
 
@@ -88,6 +101,7 @@ parser SwitchIngressParser(
         transition select(hdr.ethernet.ether_type) {
             ETHERTYPE_IPV4:  parse_ipv4;
             ETHERTYPE_VLAN:  parse_vlan;
+            ETHERTYPE_ARP:  parse_arp;
             default: accept;
         }
     }
@@ -96,8 +110,14 @@ parser SwitchIngressParser(
         packet.extract(hdr.vlan_tag);
         transition select(hdr.vlan_tag.ether_type) {
             ETHERTYPE_IPV4:  parse_ipv4;
+            ETHERTYPE_ARP:  parse_arp;
             default: accept;
         }
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
+        transition accept;
     }
 
     state parse_ipv4 {
@@ -118,7 +138,22 @@ control SwitchIngressDeparser(
         in my_ingress_metadata_t ig_md,
         in ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md) {
 
+    Checksum() ipv4_checksum;
+
     apply {
+        hdr.ipv4.hdr_checksum = ipv4_checksum.update({
+                        hdr.ipv4.version,
+                        hdr.ipv4.ihl,
+                        hdr.ipv4.diffserv,
+                        hdr.ipv4.total_len,
+                        hdr.ipv4.identification,
+                        hdr.ipv4.flags,
+                        hdr.ipv4.ttl,
+                        hdr.ipv4.protocol,
+                        hdr.ipv4.src_addr,
+                        hdr.ipv4.dst_addr
+                    });
+
         pkt.emit(hdr);
     }
 }
@@ -168,7 +203,9 @@ control SwitchIngress(
 
 
     apply {
-        calculate.apply();
+        if(!hdr.arp.isValid()){
+            calculate.apply();
+        }
         ig_intr_tm_md.bypass_egress = 1w1;
     }
 }
@@ -213,4 +250,3 @@ Pipeline(SwitchIngressParser(),
          EmptyEgressDeparser()) pipe;
 
 Switch(pipe) main;
-

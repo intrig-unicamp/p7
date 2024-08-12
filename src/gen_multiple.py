@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def gen_multiple(p4_code): 
+def gen_multiple(p4_code, routing_model): 
     f = open("./p4src/multiprogram_custom_bfrt.conf", "w")
 
     p4_original = p4_code # file name of original user p4 code
@@ -24,6 +24,11 @@ def gen_multiple(p4_code):
     	p4_copy = p4_copy[-1] + "_mod"
     else:
     	p4_copy = p4_name[0] + "_mod"	
+
+    if (routing_model == 0):
+        p7_p4code = "p7_default"
+    if (routing_model == 1):
+        p7_p4code = "p7_polka"
 
     f.write("{\n")
     f.write("    \"chip_list\": [\n")
@@ -46,13 +51,13 @@ def gen_multiple(p4_code):
     f.write("            \"device-id\": 0,\n")
     f.write("            \"p4_programs\": [\n")
     f.write("                {\n")
-    f.write("                    \"program-name\": \"p7_default\",\n")
-    f.write("                    \"bfrt-config\": \"share/tofinopd/p7_default/bf-rt.json\",\n")
+    f.write("                    \"program-name\": \"" + str(p7_p4code) + "\",\n")
+    f.write("                    \"bfrt-config\": \"share/tofinopd/" + str(p7_p4code) + "/bf-rt.json\",\n")
     f.write("                    \"p4_pipelines\": [\n")
     f.write("                        {\n")
     f.write("                            \"p4_pipeline_name\": \"pipe_p7\",\n")
-    f.write("                            \"context\": \"share/tofinopd/p7_default/pipe_p7/context.json\",\n")
-    f.write("                            \"config\": \"share/tofinopd/p7_default/pipe_p7/tofino.bin\",\n")
+    f.write("                            \"context\": \"share/tofinopd/" + str(p7_p4code) + "/pipe_p7/context.json\",\n")
+    f.write("                            \"config\": \"share/tofinopd/" + str(p7_p4code) + "/pipe_p7/tofino.bin\",\n")
     f.write("                            \"pipe_scope\": [1]\n")
     f.write("                        }\n")
     f.write("                    ]\n")
@@ -74,29 +79,3 @@ def gen_multiple(p4_code):
     f.write("        }\n")
     f.write("    ]\n")
     f.write("}\n")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

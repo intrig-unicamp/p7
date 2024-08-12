@@ -45,6 +45,7 @@ struct headers {
 
 struct my_ingress_metadata_t {
     bit<32>  ts_diff;
+    bit<16> polka_next;
 }
 
     /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
@@ -116,6 +117,16 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
 
+    // PolKa
+    CRCPolynomial<bit<16>>(
+                            coeff    = (65539 & 0xffff),
+                            reversed = false,
+                            msb      = false,
+                            extended = false,
+                            init     = 16w0x0000,
+                            xor      = 16w0x0000) poly;
+    Hash<bit<16>>(HashAlgorithm_t.CUSTOM, poly) hash;
+
     // Random value used to calculate pkt loss 
     Random<bit<10>>() rnd;
 
@@ -145,6 +156,7 @@ control SwitchIngress(
         hdr.ethernet.ether_type = hdr.rec.ether_type;
         ig_intr_tm_md.ucast_egress_port = port;
         hdr.rec.setInvalid();
+
         ig_intr_tm_md.bypass_egress = 1w1;
     }
 
@@ -152,9 +164,15 @@ control SwitchIngress(
     // Reset the initial timestamp
     // Increase the ID of the switch
     action send_next(bit<16> sw_id) {
+        // PolKa routing
+        bit<112> ndata = (bit<112>) (hdr.rec.routeid >> 16);
+        bit<16> diff = (bit<16>) hdr.rec.routeid;
+        bit<16> nres = hash.get(ndata);
+        md.polka_next = nres ^ diff;
+
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
-        hdr.rec.sw = sw_id;
+        hdr.rec.sw = md.polka_next; // Defined by PolKa
         ig_intr_tm_md.ucast_egress_port = rec_port;
     }
 
@@ -181,17 +199,20 @@ control SwitchIngress(
     // Save the initial timestamp (ingress_mac_tstamp) in the recirculation header - ts
     // Set the starting number of recirculation - num
     // Set the ID of the first switch - sw
-    action match(bit<16> link) {
+    action match(bit <16> link, bit <160> routeIdPacket) {
         hdr.rec.setValid();
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
-        hdr.rec.sw = link;
+        hdr.rec.sw = link; // Updated by Polka
         hdr.rec.dest_ip = hdr.ipv4.dst_addr;
         hdr.rec.ether_type = hdr.ethernet.ether_type;
         hdr.vlan_tag.vid = p7_vlan;
 
         hdr.ethernet.ether_type = 0x9966;
         //hdr.ethernet.src_addr = 0x000000000000;
+
+        // PolKa Edge - IN
+        hdr.rec.routeId = routeIdPacket;
 
         ig_intr_tm_md.ucast_egress_port = rec_port;
         ig_intr_tm_md.bypass_egress = 1w1;
@@ -258,10 +279,22 @@ control SwitchIngress(
         size = 1024;
     }
 
-    apply {
-        // Can be remove, just for internal use
-        // if (ig_intr_md.ingress_port == 136 || ig_intr_md.ingress_port == 137){drop();}
+    // PolKa
+    table tbl_polka {
+        key = {
+            ig_md.vrf: exact;
+            ig_md.polka_next: exact;
+        }
+        actions = {
+            act_forward;
+            act_route;
+            @defaultonly drop;
+        }
+        const default_action = drop();
+        size = 1024;
+    }
 
+    apply {
         // Validate if the incoming packet has VLAN header
         // Match the VLAN_ID with P7
         if (hdr.vlan_tag.isValid() && !hdr.rec.isValid() && !hdr.arp.isValid()) {

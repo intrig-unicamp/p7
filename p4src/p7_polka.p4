@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2022 INTRIG
+ * Copyright 2024 INTRIG
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ struct my_ingress_metadata_t {
     bit<32>  jitter_metadata;
     bit<1>   signal_metadata;
     bit<31>  padding;
+
+    // PolKa
+    bit<152> ndata;
+    bit<8> diff;
+    bit<8> nres;
 }
 
     /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
@@ -114,6 +119,43 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
 
+    // PolKa routing
+    CRCPolynomial<bit<8>>(
+                            coeff    = (285 & 0xff),
+                            reversed = false,
+                            msb      = false,
+                            extended = false,
+                            init     = 8w0x00,
+                            xor      = 8w0x00) poly2;
+    Hash<bit<8>>(HashAlgorithm_t.CUSTOM, poly2) hash2;
+
+    CRCPolynomial<bit<8>>(
+                            coeff    = (299 & 0xff),
+                            reversed = false,
+                            msb      = false,
+                            extended = false,
+                            init     = 8w0x00,
+                            xor      = 8w0x00) poly3;
+    Hash<bit<8>>(HashAlgorithm_t.CUSTOM, poly3) hash3;
+
+    CRCPolynomial<bit<8>>(
+                            coeff    = (301 & 0xff),
+                            reversed = false,
+                            msb      = false,
+                            extended = false,
+                            init     = 8w0x00,
+                            xor      = 8w0x00) poly4;
+    Hash<bit<8>>(HashAlgorithm_t.CUSTOM, poly4) hash4;
+
+    CRCPolynomial<bit<8>>(
+                            coeff    = (313 & 0xff),
+                            reversed = false,
+                            msb      = false,
+                            extended = false,
+                            init     = 8w0x00,
+                            xor      = 8w0x00) poly5;
+    Hash<bit<8>>(HashAlgorithm_t.CUSTOM, poly5) hash5;
+
     // Random value used to calculate pkt loss jitter
     Random<bit<10>>() rnd;
     Random<bit<7>>() percent;
@@ -163,14 +205,45 @@ control SwitchIngress(
     // Send packet to the next internal switch 
     // Reset the initial timestamp
     // Increase the ID of the switch
-    action send_next(bit<16> link_id, bit<16> sw_id) {
+    action send_next(bit<16> sw_id) {
+        // PolKa routing
+        md.ndata = (bit<152>) (hdr.rec.routeid >> 8);
+        md.diff = (bit<8>) hdr.rec.routeid;
+
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
-        hdr.rec.sw = link_id;
+
         hdr.rec.sw_id = sw_id;
+
         ig_intr_tm_md.ucast_egress_port = port_user;
     }
 
+    action send_next_1(bit<16> link_id) {
+        hdr.rec.sw = link_id;
+    }
+    action send_next_2() {
+        // PolKa routing
+        md.nres = hash2.get(md.ndata);
+        hdr.rec.sw = (bit<16>) (md.nres^md.diff); // Next link by PolKa
+    }
+    action send_next_3() {
+        // PolKa routing
+        md.nres = hash3.get(md.ndata);
+        hdr.rec.sw = (bit<16>) (md.nres^md.diff); // Next link by PolKa
+    }
+    action send_next_4() {
+        // PolKa routing
+        md.nres = hash4.get(md.ndata);
+        hdr.rec.sw = (bit<16>) (md.nres^md.diff); // Next link by PolKa
+    }
+    action send_next_5() {
+        // PolKa routing
+        md.nres = hash5.get(md.ndata);
+        hdr.rec.sw = (bit<16>) (md.nres^md.diff); // Next link by PolKa
+    }
+    action send_next_6(bit<16> link_id) {
+        hdr.rec.sw = link_id;
+    }
     // Forward a packet directly without any P7 processing
     action send_direct(PortId_t port) {
         ig_intr_tm_md.ucast_egress_port = port;
@@ -204,7 +277,7 @@ control SwitchIngress(
     // Save the initial timestamp (ingress_mac_tstamp) in the recirculation header - ts
     // Set the starting number of recirculation - num
     // Set the ID of the first switch - sw
-    action match(bit<16> link) {
+    action match(bit<16> link, bit<160> routeIdPacket) {
         hdr.rec.setValid();
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
@@ -217,13 +290,14 @@ control SwitchIngress(
         hdr.rec.signal = md.signal_metadata;
 
         hdr.ethernet.ether_type = 0x9966;
-        //hdr.ethernet.src_addr = 0x000000000000;
+
+        hdr.rec.routeid = routeIdPacket;
 
         ig_intr_tm_md.ucast_egress_port = rec_port;
         ig_intr_tm_md.bypass_egress = 1w1;
     }
 
-    action match_arp(bit<16> link) {
+    action match_arp(bit<16> link, bit<160> routeIdPacket) {
         hdr.rec.setValid();
         hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];
         hdr.rec.num = 1;
@@ -236,6 +310,8 @@ control SwitchIngress(
         hdr.rec.signal = md.signal_metadata;
 
         hdr.ethernet.ether_type = 0x9966;
+
+        hdr.rec.routeid = routeIdPacket;
 
         ig_intr_tm_md.ucast_egress_port = rec_port;
         ig_intr_tm_md.bypass_egress = 1w1;
@@ -258,9 +334,26 @@ control SwitchIngress(
             @defaultonly drop;
         }
         const default_action = drop();
-        size = 1024;
+        size = 128;
     }
 
+    table basic_fwd_hash {
+        key = {
+            hdr.rec.sw_id : exact;
+            hdr.rec.dest_ip   : exact;
+        }
+        actions = {
+            send_next_1;
+            send_next_2;
+            send_next_3;
+            send_next_4;
+            send_next_5;
+            send_next_6;
+            @defaultonly drop;
+        }
+        const default_action = drop();
+        size = 128;
+    }
 
     // Table to verify the VLAN_ID to be processed by P7
     // Match the VLAN_ID and the ingress port
@@ -275,7 +368,7 @@ control SwitchIngress(
             @defaultonly drop;
         }
         const default_action = drop();
-        size = 1024;
+        size = 128;
     }
 
     table arp_fwd {
@@ -289,7 +382,7 @@ control SwitchIngress(
             @defaultonly drop;
         }
         const default_action = drop();
-        size = 1024;
+        size = 128;
     }
 
     apply {
@@ -337,6 +430,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -360,6 +454,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -383,6 +478,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -406,6 +502,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -429,6 +526,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -452,6 +550,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -475,6 +574,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -498,6 +598,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 
@@ -521,6 +622,7 @@ control SwitchIngress(
                         bit<10> R = rnd.get();
                         if (R >= pkt_loss) {            // @2-% of pkt loss 
                             basic_fwd.apply();
+                            basic_fwd_hash.apply();
                         }else{
                             drop();
                         } 

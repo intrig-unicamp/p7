@@ -1,14 +1,8 @@
 ucli
 pm
-port-add 2/0 10G NONE
-port-enb 2/0
-an-set 2/0 2
 port-add 1/0 10G NONE
 port-enb 1/0
 an-set 1/0 2
-port-add 2/1 10G NONE
-port-enb 2/1
-an-set 2/1 2
 port-add 1/2 10G NONE
 port-enb 1/2
 an-set 1/2 2
@@ -17,11 +11,7 @@ port-enb -/-
 show
 exit
 bfrt_python
-tf1.tm.port.sched_cfg.mod(dev_port=136, max_rate_enable=True)
-tf1.tm.port.sched_shaping.mod(dev_port=136, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
-tf1.tm.port.sched_cfg.mod(dev_port=128, max_rate_enable=True)
-tf1.tm.port.sched_shaping.mod(dev_port=128, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
-tf1.tm.port.sched_cfg.mod(dev_port=137, max_rate_enable=True)
-tf1.tm.port.sched_shaping.mod(dev_port=137, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
-tf1.tm.port.sched_cfg.mod(dev_port=130, max_rate_enable=True)
-tf1.tm.port.sched_shaping.mod(dev_port=130, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
+tf1.tm.port.sched_cfg.mod(dev_port=132, max_rate_enable=True)
+tf1.tm.port.sched_shaping.mod(dev_port=132, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)
+tf1.tm.port.sched_cfg.mod(dev_port=134, max_rate_enable=True)
+tf1.tm.port.sched_shaping.mod(dev_port=134, unit='BPS', provisioning='MIN_ERROR', max_rate=10000000, max_burst_size=9000)

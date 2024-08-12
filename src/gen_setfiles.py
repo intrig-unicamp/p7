@@ -14,7 +14,7 @@
  # limitations under the License.
  ################################################################################
 
-def gen_set_files(p4_code): 
+def gen_set_files(p4_code, routing_model): 
     f = open("./set_files.sh", "w")
 
     p4_original = p4_code # file name of original user p4 code
@@ -44,5 +44,8 @@ def gen_set_files(p4_code):
     f.write("#!/bin/bash\n")
     f.write("\n")
     f.write("cp files/p4rt.py p4src/p4rt/\n")
-    f.write("cp files/p7_default.p4 p4src/\n")
+    if (routing_model == 0):
+        f.write("cp files/p7_default.p4 p4src/\n")
+    if (routing_model == 1):
+        f.write("cp files/p7_polka.p4 p4src/\n")
     f.write("cp files/" + str(p4_copy) + " p4src/\n")

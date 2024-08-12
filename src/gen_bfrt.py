@@ -14,7 +14,8 @@
  # limitations under the License.
  ################################################################################
 
-def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mirror):
+def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mirror,
+                routing_model, route_ids, edge_links, route_seq, link_seq, route_dest, edge_hosts, name_sw):
     links = []
     
     for j in range(len(hosts)):
@@ -30,7 +31,10 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mir
     p4 = user_p4[-1].split('.')
 
     f.write("from netaddr import IPAddress\n")
-    f.write("p4p7 = bfrt.p7_default.pipe_p7\n")
+    if (routing_model == 0):
+        f.write("p4p7 = bfrt.p7_default.pipe_p7\n")
+    if (routing_model == 1):
+        f.write("p4p7 = bfrt.p7_polka.pipe_p7\n")
     f.write("p4user = bfrt." + p4[0] + "_mod" +"." + "pipe" + "\n") # UPDATE TO USER PIPELINE
     f.write("p4mirror = bfrt.mirror\n")
     f.write("\n")
@@ -64,23 +68,75 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mir
 
     for i in range(len(hosts)):
         f.write("vlan_fwd = p4p7.SwitchIngress.vlan_fwd\n")
-        f.write("vlan_fwd.add_with_match(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
+        if (routing_model == 0):
+            f.write("vlan_fwd.add_with_match(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
+        if (routing_model == 1):
+            f.write("vlan_fwd.add_with_match(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(edge_hosts[i][0]) + ", routeIdPacket=" + str(route_ids[i]) + ")\n")
         f.write("\n")
 
     for i in range(len(hosts)):
         f.write("arp_fwd = p4p7.SwitchIngress.arp_fwd\n")
-        f.write("arp_fwd.add_with_match_arp(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
+        if (routing_model == 0):
+            f.write("arp_fwd.add_with_match_arp(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(links[i][0]) + ")\n")
+        if (routing_model == 1):
+            f.write("arp_fwd.add_with_match_arp(vid=" + str(hosts[i][6]) + ", ingress_port=" + str(hosts[i][2]) + ",   link=" + str(edge_hosts[i][0]) + ", routeIdPacket=" + str(route_ids[i]) + ")\n")
         f.write("\n")
 
-    for i in range(len(tableEntries)):
-        if tableEntries[i][2] == "send_next":
-            f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
-            f.write("basic_fwd.add_with_send_next(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   link_id=" + str(tableEntries[i][3]) + ", sw_id="+ str(tableEntries[i][4]) + ")\n")
-            f.write("\n")
-        elif tableEntries[i][2] == "send":
-            f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
-            f.write("basic_fwd.add_with_send(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   port=" + str(tableEntries[i][3]) + ")\n")
-            f.write("\n")
+    if (routing_model == 0):
+        for i in range(len(tableEntries)):
+            if tableEntries[i][2] == "send_next":
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send_next(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   link_id=" + str(tableEntries[i][3]) + ", sw_id="+ str(tableEntries[i][4]) + ")\n")
+                f.write("\n")
+            elif tableEntries[i][2] == "send":
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send(sw=" + str(tableEntries[i][0]) + ", dest_ip=IPAddress(\'" + str(tableEntries[i][1]) + "\'),   port=" + str(tableEntries[i][3]) + ")\n")
+                f.write("\n")
+    if (routing_model == 1):
+        for i in range(len(edge_links)):
+            if (i == 0):
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send_next(sw=" + str(edge_links[i]) + ", dest_ip=IPAddress(\'" + str(route_dest[0]) + "\'),   sw_id=" + str(int(edge_hosts[0][1][2:])-1) + ")\n")
+                f.write("\n")
+            if (i == 1):
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send_next(sw=" + str(edge_links[i]) + ", dest_ip=IPAddress(\'" + str(route_dest[0]) + "\'),   sw_id=" + str(int(edge_hosts[0][1][2:])) + ")\n")
+                f.write("\n")
+            if (i == 2):
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send_next(sw=" + str(edge_links[i]) + ", dest_ip=IPAddress(\'" + str(route_dest[1]) + "\'),   sw_id=" + str(int(edge_hosts[1][1][2:])-2) + ")\n")
+                f.write("\n")
+            if (i == 3):
+                f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                f.write("basic_fwd.add_with_send_next(sw=" + str(edge_links[i]) + ", dest_ip=IPAddress(\'" + str(route_dest[1]) + "\'),   sw_id=" + str(int(edge_hosts[1][1][2:])-1) + ")\n")
+                f.write("\n")
+        for i in range(len(route_seq)):
+            if (i == 0):
+                for j in range(len(route_seq[i])):
+                    f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                    f.write("basic_fwd.add_with_send_next(sw=" + str(link_seq[i][j]) + ", dest_ip=IPAddress(\'" + str(route_dest[i]) + "\'),   sw_id="+ str(int(route_seq[i][j][2:])) + ")\n")
+                    f.write("\n")
+            if (i == 1):
+                for j in range(len(route_seq[i])):
+                    f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+                    f.write("basic_fwd.add_with_send_next(sw=" + str(link_seq[i][j]) + ", dest_ip=IPAddress(\'" + str(route_dest[i]) + "\'),   sw_id="+ str(int(route_seq[i][j][2:])-2) + ")\n")
+                    f.write("\n")
+        f.write("basic_fwd = p4p7.SwitchIngress.basic_fwd\n")
+        f.write("basic_fwd.add_with_send(sw=" + str(edge_links[0]) + ", dest_ip=IPAddress(\'" + str(route_dest[1]) + "\'),   port=" + str(hosts[0][2]) + ")\n")
+        f.write("basic_fwd.add_with_send(sw=" + str(edge_links[-1]) + ", dest_ip=IPAddress(\'" + str(route_dest[0]) + "\'),   port=" + str(hosts[-1][2]) + ")\n")
+        f.write("\n")
+
+        f.write("basic_fwd_hash = p4p7.SwitchIngress.basic_fwd_hash\n")
+        f.write("basic_fwd_hash.add_with_send_next_" + str(name_sw[0][2:]) + "(sw_id=" + str(int(name_sw[0][2:])-1) + ", dest_ip=IPAddress(\'" + str(route_dest[0]) + "\'), link_id=1)\n")
+        f.write("basic_fwd_hash.add_with_send_next_" + str(name_sw[0][2:]) + "(sw_id=" + str(int(name_sw[0][2:])-1) + ", dest_ip=IPAddress(\'" + str(route_dest[1]) + "\'), link_id=" + str(edge_hosts[0][0]) + ")\n")
+        f.write("basic_fwd_hash.add_with_send_next_" + str(name_sw[-1][2:]) + "(sw_id=" + str(int(name_sw[-1][2:])-1) + ", dest_ip=IPAddress(\'" + str(route_dest[1]) + "\'), link_id=7)\n")
+        f.write("basic_fwd_hash.add_with_send_next_" + str(name_sw[-1][2:]) + "(sw_id=" + str(int(name_sw[-1][2:])-1) + ", dest_ip=IPAddress(\'" + str(route_dest[0]) + "\'), link_id=" + str(edge_hosts[-1][0]) + ")\n")
+        f.write("\n")
+        for i in range(1, len(name_sw) - 1):
+            for j in range(len(route_dest)):
+                f.write("basic_fwd_hash = p4p7.SwitchIngress.basic_fwd_hash\n")
+                f.write("basic_fwd_hash.add_with_send_next_" + str(name_sw[i][2:]) + "(sw_id=" + str(int(name_sw[i][2:])-1) + ", dest_ip=IPAddress(\'" + str(route_dest[j]) + "\'))\n")
+                f.write("\n")
 
     for i in range(len(vlans)):
         f.write("vlan_fwd.add_with_send_direct(vid=" + str(vlans[i][2]) + ", ingress_port=" + str(vlans[i][0]) + ",   port=" + str(vlans[i][1]) + ")\n")

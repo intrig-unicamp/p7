@@ -14,12 +14,20 @@
  # limitations under the License.
  ################################################################################
 
-def generate_p4(rec_port, port_user, name_sw, hosts, links):
-	f = open("./files/p7_default.p4", "w")
+def generate_p4(rec_port, port_user, name_sw, hosts, links,
+				routing_model, route_ids, dec_s, route_seq, edge_hosts, crc):
+	
+	if (routing_model == 0):
+		model = "default"
+	if (routing_model == 1):
+		model = "polka"
+	
+	f = open("./files/p7_" + model + ".p4", "w")
+
 
 	# License
 	f.write("/*******************************************************************************\n")
-	f.write(" * Copyright 2022 INTRIG\n")
+	f.write(" * Copyright 2024 INTRIG\n")
 	f.write(" *\n")
 	f.write(" * Licensed under the Apache License, Version 2.0 (the \"License\");\n")
 	f.write(" * you may not use this file except in compliance with the License.\n")
@@ -91,6 +99,18 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("    bit<32>  jitter_metadata;\n")
 	f.write("    bit<1>   signal_metadata;\n")
 	f.write("    bit<31>  padding;\n")
+	f.write("\n")
+	if (routing_model == 1):
+		f.write("    // PolKa\n")
+		if (crc == 8):
+			f.write("    bit<152> ndata;\n")
+			f.write("    bit<8> diff;\n")
+			f.write("    bit<8> nres;\n")
+		if (crc == 16):
+			f.write("    bit<144> ndata;\n")
+			f.write("    bit<16> diff;\n")
+			f.write("    bit<16> nres;\n")
+
 	f.write("}\n")
 	f.write("\n")
 
@@ -172,6 +192,28 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("        inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {\n")
 	f.write("\n")
 
+	#PolKa CRC definition
+	if (routing_model == 1):
+		f.write("    // PolKa routing\n")
+		for i in name_sw:
+			if not (i == edge_hosts[0][1] or i == edge_hosts[1][1]):
+				f.write("    CRCPolynomial<bit<" + str(crc) + ">>(\n")
+				if (crc == 8):
+					f.write("                            coeff    = (" + str(dec_s[int(i[2:]) - 1]) + " & 0xff),\n")
+				elif (crc == 16):
+					f.write("                            coeff    = (" + str(dec_s[int(i[2:]) - 1]) + " & 0xffff),\n")
+				f.write("                            reversed = false,\n")
+				f.write("                            msb      = false,\n")
+				f.write("                            extended = false,\n")
+				if (crc == 8):
+					f.write("                            init     = 8w0x00,\n")
+					f.write("                            xor      = 8w0x00) poly" + str(int(i[2:])) + ";\n")
+				elif (crc == 16):
+					f.write("                            init     = 16w0x0000,\n")
+					f.write("                            xor      = 16w0x0000) poly" + str(int(i[2:])) + ";\n")
+				f.write("    Hash<bit<" + str(crc) + ">>(HashAlgorithm_t.CUSTOM, poly" + str(int(i[2:])) + ") hash" + str(int(i[2:])) + ";\n")
+				f.write("\n")
+
 	# Random value for pkt loss and jitter
 	f.write("    // Random value used to calculate pkt loss jitter\n")
 	f.write("    Random<bit<10>>() rnd;\n")
@@ -228,14 +270,42 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("    // Send packet to the next internal switch \n")
 	f.write("    // Reset the initial timestamp\n")
 	f.write("    // Increase the ID of the switch\n")
-	f.write("    action send_next(bit<16> link_id, bit<16> sw_id) {\n")
+	if (routing_model == 0):
+		f.write("    action send_next(bit<16> link_id, bit<16> sw_id) {\n")
+	if (routing_model == 1):
+		f.write("    action send_next(bit<16> sw_id) {\n")
+		f.write("        // PolKa routing\n")
+		if (crc == 8):
+			f.write("        md.ndata = (bit<152>) (hdr.rec.routeid >> 8);\n")
+			f.write("        md.diff = (bit<8>) hdr.rec.routeid;\n")
+		if (crc == 16):
+			f.write("        md.ndata = (bit<144>) (hdr.rec.routeid >> 16);\n")
+			f.write("        md.diff = (bit<16>) hdr.rec.routeid;\n")
+		f.write("\n")
 	f.write("        hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];\n")
 	f.write("        hdr.rec.num = 1;\n")
-	f.write("        hdr.rec.sw = link_id;\n")
+	f.write("\n")
+	if (routing_model == 0):
+		f.write("        hdr.rec.sw = link_id;\n")
 	f.write("        hdr.rec.sw_id = sw_id;\n")
+	f.write("\n")
 	f.write("        ig_intr_tm_md.ucast_egress_port = port_user;\n")
 	f.write("    }\n")
 	f.write("\n")
+
+	if (routing_model == 1):
+		for i in name_sw:
+			if (i == edge_hosts[0][1] or i == edge_hosts[1][1]):
+				f.write("    action send_next_" + str(int(i[2:])) + "(bit<16> link_id) {\n")
+				f.write("        hdr.rec.sw = link_id;\n")
+				f.write("    }\n")
+			else:
+				f.write("    action send_next_" + str(int(i[2:])) + "() {\n")
+				f.write("        // PolKa routing\n")
+				f.write("        md.nres = hash" + str(int(i[2:])) + ".get(md.ndata);\n")
+				f.write("        hdr.rec.sw = (bit<16>) (md.nres^md.diff); // Next link by PolKa\n")
+				f.write("    }\n")
+
 	f.write("    // Forward a packet directly without any P7 processing\n")
 	f.write("    action send_direct(PortId_t port) {\n")
 	f.write("        ig_intr_tm_md.ucast_egress_port = port;\n")
@@ -269,7 +339,10 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("    // Save the initial timestamp (ingress_mac_tstamp) in the recirculation header - ts\n")
 	f.write("    // Set the starting number of recirculation - num\n")
 	f.write("    // Set the ID of the first switch - sw\n")
-	f.write("    action match(bit<16> link) {\n")
+	if (routing_model == 0):
+		f.write("    action match(bit<16> link) {\n")
+	if (routing_model == 1):
+		f.write("    action match(bit<16> link, bit<160> routeIdPacket) {\n")
 	f.write("        hdr.rec.setValid();\n")
 	f.write("        hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];\n")
 	f.write("        hdr.rec.num = 1;\n")
@@ -282,14 +355,19 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("        hdr.rec.signal = md.signal_metadata;\n")
 	f.write("\n")
 	f.write("        hdr.ethernet.ether_type = 0x9966;\n")
-	f.write("        //hdr.ethernet.src_addr = 0x000000000000;\n")
 	f.write("\n")
+	if (routing_model == 1):
+		f.write("        hdr.rec.routeid = routeIdPacket;\n")
+		f.write("\n")
 	f.write("        ig_intr_tm_md.ucast_egress_port = rec_port;\n")
 	f.write("        ig_intr_tm_md.bypass_egress = 1w1;\n")
 	f.write("    }\n")
 
 	f.write("\n")
-	f.write("    action match_arp(bit<16> link) {\n")
+	if (routing_model == 0):
+		f.write("    action match_arp(bit<16> link) {\n")
+	if (routing_model == 1):
+		f.write("    action match_arp(bit<16> link, bit<160> routeIdPacket) {\n")
 	f.write("        hdr.rec.setValid();\n")
 	f.write("        hdr.rec.ts = ig_intr_md.ingress_mac_tstamp[31:0];\n")
 	f.write("        hdr.rec.num = 1;\n")
@@ -303,6 +381,9 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("\n")
 	f.write("        hdr.ethernet.ether_type = 0x9966;\n")
 	f.write("\n")
+	if (routing_model == 1):
+		f.write("        hdr.rec.routeid = routeIdPacket;\n")
+		f.write("\n")
 	f.write("        ig_intr_tm_md.ucast_egress_port = rec_port;\n")
 	f.write("        ig_intr_tm_md.bypass_egress = 1w1;\n")
 	f.write("    }\n")
@@ -326,9 +407,24 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("            @defaultonly drop;\n")
 	f.write("        }\n")
 	f.write("        const default_action = drop();\n")
-	f.write("        size = 1024;\n")
+	f.write("        size = 128;\n")
 	f.write("    }\n")
 	f.write("\n")
+
+	if (routing_model == 1):
+		f.write("    table basic_fwd_hash {\n")
+		f.write("        key = {\n")
+		f.write("            hdr.rec.sw_id : exact;\n")
+		f.write("            hdr.rec.dest_ip   : exact;\n")
+		f.write("        }\n")
+		f.write("        actions = {\n")
+		for i in name_sw:
+			f.write("            send_next_" + str(int(i[2:])) + ";\n")
+		f.write("            @defaultonly drop;\n")
+		f.write("        }\n")
+		f.write("        const default_action = drop();\n")
+		f.write("        size = 128;\n")
+		f.write("    }\n")
 
 	f.write("\n")
 	f.write("    // Table to verify the VLAN_ID to be processed by P7\n")
@@ -344,7 +440,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("            @defaultonly drop;\n")
 	f.write("        }\n")
 	f.write("        const default_action = drop();\n")
-	f.write("        size = 1024;\n")
+	f.write("        size = 128;\n")
 	f.write("    }\n")
 
 
@@ -360,7 +456,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 	f.write("            @defaultonly drop;\n")
 	f.write("        }\n")
 	f.write("        const default_action = drop();\n")
-	f.write("        size = 1024;\n")
+	f.write("        size = 128;\n")
 	f.write("    }\n")
 
 
@@ -416,6 +512,8 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links):
 		f.write("                        bit<10> R = rnd.get();\n")
 		f.write("                        if (R >= pkt_loss) {            // @2-% of pkt loss \n")
 		f.write("                            basic_fwd.apply();\n")
+		if (routing_model == 1):
+			f.write("                            basic_fwd_hash.apply();\n")
 		f.write("                        }else{\n")
 		f.write("                            drop();\n")
 		f.write("                        } \n")
