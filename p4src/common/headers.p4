@@ -180,6 +180,8 @@ struct headers {
     vlan_tag_h   vlan_tag;
     arp_h   arp;
     ipv4_h       ipv4;
+    tcp_h       tcp;
+    udp_h       udp;
 }
 
 struct empty_header_t {}

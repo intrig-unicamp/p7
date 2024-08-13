@@ -73,6 +73,10 @@ class generator:
                 self.edge_hosts = []
                 self.dec_s = []
 
+                #Slice
+                self.slice = []
+                self.slice_number = []
+
         def addstratum(self, ip):
                 self.stratum_ip = ip
 
@@ -135,13 +139,18 @@ class generator:
                 self.routing_crc = crc
 
         #Polka
-        def routeid(self, routes, links, dest):
+        def routeid(self, slice_number, routes, links, dest):
+                self.slice_number.append(slice_number)
                 self.route_seq.append(routes)
                 self.link_seq.append(links)
                 self.route_dest.append(dest)
 
         def edgeroute(self, route1, route2):
                 self.edge_route.append([route1, route2])
+
+        #Slice
+        def addslice(self, number, port = 0):
+                self.slice.append([number, port])
 
         def addaction(self, name):
                 self.action_name.append(name)
@@ -271,7 +280,8 @@ class generator:
                         self.edge_hosts = self.find_edge_host(self.link)
 
                 generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids, self.p4_code, self.mirrorinfo, 
-                                        self.routing_model, self.route_ids, self.edge_links, self.route_seq, self.link_seq, self.route_dest, self.edge_hosts, self.name_sw) # PolKa
+                            self.routing_model, self.route_ids, self.edge_links, self.route_seq, self.link_seq, self.route_dest, self.edge_hosts, self.name_sw, # PolKa
+                            self.slice, self.slice_number) # Slice
 
         def generate_p4code(self):
                 if len(self.name_sw) > 0:
@@ -285,7 +295,8 @@ class generator:
                         self.dec_s.append(int(''.join(map(str, self.s_ids[i])),2))
 
                 generate_p4(self.rec_port, self.port_user, self.name_sw, self.host, self.link, 
-                                        self.routing_model, self.route_ids, self.dec_s, self.route_seq, self.edge_hosts, self.routing_crc) # PolKa
+                            self.routing_model, self.route_ids, self.dec_s, self.route_seq, self.edge_hosts, self.routing_crc, # PolKa
+                            self.slice) # Slice
 
         def generate_graph(self):
                 print("\nNetwork Topology created files/topo.png\n")

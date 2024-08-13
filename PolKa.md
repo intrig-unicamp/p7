@@ -9,11 +9,15 @@
 - regex
 - polka-routing
 
+For the host
+
+- hping3
+
 ## Download
 
 ```
 git clone https://github.com/intrig-unicamp/p7.git
-
+cd p7
 git checkout polka
 ```
 
@@ -87,11 +91,11 @@ cd bf-sde-9.13.2
 ```
 Load table information:
 ```
-bfshell -b /home/admin12/fabricio/p7/files/bfrt.py
+bfshell -b ~p7/files/bfrt.py
 ```
 Configure ports:
 ```
-bfshell -f /home/admin12/fabricio/p7/files/ports_config.txt -i
+bfshell -f ~/p7/files/ports_config.txt -i
 ```
 
 ### Send Traffic
@@ -131,3 +135,11 @@ ping 192.168.0.20
 The response should have a TTL of 103* (64 + 40).
 
 \*The initial TTL is 64.
+
+### Slice
+
+To validate a specific route, use hpin3. Then, you can specify the TCP port
+
+```
+sudo hping3 192.168.0.20 -p 8080
+```

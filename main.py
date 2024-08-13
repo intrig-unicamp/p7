@@ -1,5 +1,5 @@
  ################################################################################
- # Copyright 2022 INTRIG
+ # Copyright 2024 INTRIG
  #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -18,9 +18,6 @@ from src.data import *
 
 topo = generator('main')
 
-# Stratum ip:port
-# topo.addstratum("10.1.1.223:9559")
-
 # Recirculation port default 68
 topo.addrec_port(196)
 topo.addrec_port_user(68)
@@ -34,13 +31,10 @@ topo.addswitch("sw5")
 topo.addswitch("sw6")
 topo.addp4("p4src/p7calc.p4")
 
-# addhost(name,port,D_P,speed_bps,AU,FEC,vlan)
+# addhost(name,port,D_P,speed_bps,AU,FEC,vlan, dest_IP)
 # include the link configuration
 topo.addhost("h1","1/0", 132, 10000000000, "False", "False", 1920, "192.168.0.10")
 topo.addhost("h2","1/2", 134, 10000000000, "False", "False", 1920, "192.168.0.20")
-# topo.addhost("h3","2/1", 137, 10000000000, "False", "False", 1920, "192.168.0.5")
-# topo.addhost("h4","1/2", 130, 10000000000, "False", "False", 1920, "192.168.0.3")
-
 
 # addlink(node1, node2, bw, pkt_loss, latency, jitter, percentage)
 # bw is considered just for the first defined link
@@ -59,11 +53,30 @@ topo.addlink("sw6","h2", 10000000000, 0, 0, 0, 100)		#8
 # 1 PolKA - Polynomial Key-based Architecture for Source Routing
 #	if polka, (ID, CRC)
 topo.routing(1, 8)
-#topo.routeid(["sw2","sw3","sw5"], [2,5,7], "192.168.0.20")
-#topo.routeid(["sw5","sw3","sw2"], [5,2,1], "192.168.0.20")
 
-topo.routeid(["sw2","sw3","sw4","sw5"], [2,4,6,7], "192.168.0.20")
-topo.routeid(["sw5","sw4","sw3","sw2"], [6,4,2,1], "192.168.0.10")
+# PolKa route ID
+# routeid(Slice number, list of switch, list of links, dest_IP)
+# Slice 1
+# ----->
+topo.routeid(1, ["sw2","sw3","sw5"], [2,5,7], "192.168.0.20")
+# <-----
+topo.routeid(1, ["sw5","sw3","sw2"], [5,2,1], "192.168.0.10")
+# addslice(Slice number, Port number/Default)
+# 0 = other packets
+# If not default slice is defined, other packets will be droped
+topo.addslice(1, 8080)
+
+# Slice 2
+topo.routeid(2, ["sw2","sw4","sw5"], [3,6,7], "192.168.0.20")
+topo.routeid(2, ["sw5","sw4","sw2"], [6,3,1], "192.168.0.10")
+topo.addslice(2, 1234)
+
+# Slice 3
+topo.routeid(3, ["sw2","sw3","sw4","sw5"], [2,4,6,7], "192.168.0.20")
+topo.routeid(3, ["sw5","sw4","sw3","sw2"], [6,4,2,1], "192.168.0.10")
+topo.addslice(3, 0)
+
+# Edge
 topo.edgeroute("h1","sw1")
 topo.edgeroute("sw1","sw2")
 topo.edgeroute("sw5","sw6")
