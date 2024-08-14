@@ -70,7 +70,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		# for i in range(len(links)):
 			# f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		for i in range(len(links)):
-			f.write("const bit<32> latency" + str(i) + " = " + str(links[0][4]*1000000) + ";   // latency" + str(i) + "  - 10000000 - 10ms\n")
+			f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency" + str(i) + "  - 10000000 - 10ms\n")
 		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		f.write("const bit<7> percentTax = " + str(int(links[0][6]*127/100)) + ";   // percent*127/100\n")
 	else:
