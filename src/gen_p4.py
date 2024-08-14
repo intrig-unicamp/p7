@@ -67,8 +67,6 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		f.write("const bit<10> pkt_loss = " + str(hex(int(round(10.2*links[0][3])))) + ";       // packet loss  - 0xCC - 240 - 20%\n")
 		f.write("const PortId_t rec_port = " + str(rec_port) + ";       // recirculation port\n")
 		f.write("const PortId_t port_user = " + str(port_user) + ";       // recirculation port\n")
-		# for i in range(len(links)):
-			# f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency  - 10000000 - 10ms\n")
 		for i in range(len(links)):
 			f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency" + str(i) + "  - 10000000 - 10ms\n")
 		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // latency  - 10000000 - 10ms\n")

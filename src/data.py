@@ -290,7 +290,6 @@ class generator:
                                 print("\tAdding Switch %s" % self.name_sw[i])
 
                 print("\nGenrating P4 Code...")
-                print(self.edge_hosts)
                 for i in range(len(self.s_ids)):
                         self.dec_s.append(int(''.join(map(str, self.s_ids[i])),2))
 
