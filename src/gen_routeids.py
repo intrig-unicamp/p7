@@ -62,7 +62,7 @@ def generateRouteIDs(route_seq, link_seq, size):
 		# defining output ports
 		o = [list(map(int, bin(ports)[2:])) for ports in link_seq[i]]
 
-		ids = calculate_routeid(nodes, o, debug=DEBUG)
+		ids = calculate_routeid(nodes, o, debug=False)
 
 		binary_string = ''.join(map(str, ids))
 

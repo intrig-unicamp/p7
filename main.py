@@ -21,6 +21,8 @@ topo = generator('main')
 # Recirculation port default 68
 topo.addrec_port(196)
 topo.addrec_port_user(68)
+# Second pipeline recirculation port for custom bandwidth
+topo.addrec_port_bw("16/-", 0)
 
 # addswitch(name)
 topo.addswitch("sw1")
@@ -38,7 +40,7 @@ topo.addhost("h2","1/2", 134, 10000000000, "False", "False", 1920, "192.168.0.20
 
 # addlink(node1, node2, bw, pkt_loss, latency, jitter, percentage)
 # bw is considered just for the first defined link
-topo.addlink("h1","sw1", 10000000000, 0, 0, 0, 100)		#0
+topo.addlink("h1","sw1",  10000000000, 0, 0, 0, 100)		#0
 topo.addlink("sw1","sw2", 10000000000, 0, 0, 0, 100)	#1
 topo.addlink("sw2","sw3", 10000000000, 0, 0, 0, 100)	#2
 topo.addlink("sw2","sw4", 10000000000, 0, 0, 0, 100)	#3
@@ -46,7 +48,7 @@ topo.addlink("sw3","sw4", 10000000000, 0, 0, 0, 100)	#4
 topo.addlink("sw3","sw5", 10000000000, 0, 0, 0, 100)	#5
 topo.addlink("sw4","sw5", 10000000000, 0, 0, 0, 100)	#6
 topo.addlink("sw5","sw6", 10000000000, 0, 0, 0, 100)	#7
-topo.addlink("sw6","h2", 10000000000, 0, 0, 0, 100)		#8
+topo.addlink("sw6","h2",  10000000000, 0, 0, 0, 100)	#8
 
 # Forwarding models:
 # 0 Default using dijkstra
@@ -62,14 +64,19 @@ topo.routeid(1, ["sw2","sw3","sw5"], [2,5,7], "192.168.0.20")
 # <-----
 topo.routeid(1, ["sw5","sw3","sw2"], [5,2,1], "192.168.0.10")
 # addslice(Slice number, Port number/Default)
-# 0 = other packets
+# 0 = other packets/Default slice
 # If not default slice is defined, other packets will be droped
-topo.addslice(1, 8080)
+topo.addslice(1, 5001)
+# Select the slice validator:
+# TCP
+# UDP (Default)
+# ToS (IPv4)
+topo.slicemetric("UDP")
 
 # Slice 2
 topo.routeid(2, ["sw2","sw4","sw5"], [3,6,7], "192.168.0.20")
 topo.routeid(2, ["sw5","sw4","sw2"], [6,3,1], "192.168.0.10")
-topo.addslice(2, 1234)
+topo.addslice(2, 5002)
 
 # Slice 3
 topo.routeid(3, ["sw2","sw3","sw4","sw5"], [2,4,6,7], "192.168.0.20")

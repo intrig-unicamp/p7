@@ -44,6 +44,8 @@ class generator:
                 self.vlan_link = []
                 self.rec_port = 68
                 self.port_user = 128
+                self.rec_port_bw = ["9999", 9999]
+                self.links_rec = []
 
                 #Table
                 self.table_name = []
@@ -76,6 +78,7 @@ class generator:
                 #Slice
                 self.slice = []
                 self.slice_number = []
+                self.slice_metric = "UDP"
 
         def addstratum(self, ip):
                 self.stratum_ip = ip
@@ -85,6 +88,9 @@ class generator:
 
         def addrec_port_user(self, port):
                 self.port_user = port
+
+        def addrec_port_bw(self, port, d_p):
+                self.rec_port_bw = [port, d_p]
 
         def addswitch(self, name):
                 self.name_sw.append(name)
@@ -151,6 +157,16 @@ class generator:
         #Slice
         def addslice(self, number, port = 0):
                 self.slice.append([number, port])
+
+        def slicemetric(self, protocol):
+                if (protocol == "TCP" or protocol == "UDP" or protocol == "ToS"):
+                        self.slice_metric = protocol
+                else:
+                        print("Not a valid slice protocol")
+                        print("Select the slice validator:")
+                        print("- TCP")
+                        print("- UDP (Default)")
+                        print("- ToS (IPv4)")
 
         def addaction(self, name):
                 self.action_name.append(name)
@@ -226,7 +242,7 @@ class generator:
                             print("port: %s (ID: %s) \n\tspeed: %s \n\tAU: %s \n\tFEC: %s" %(self.vlan_port[i][0],self.vlan_port[i][1],self.vlan_port[i][2],self.vlan_port[i][3],self.vlan_port[i][4]))
 
                 print("\nGenrating Ports Config...")
-                generate_port(self.host, self.link, self.vlan_port)
+                self.links_rec = generate_port(self.host, self.link, self.vlan_port, self.rec_port_bw)
 
         def generate_p4rt(self):
                 if (len(self.vlan_link) == 0 and len(self.vlan_port) > 0 ):
@@ -295,7 +311,7 @@ class generator:
 
                 generate_p4(self.rec_port, self.port_user, self.name_sw, self.host, self.link, 
                             self.routing_model, self.route_ids, self.dec_s, self.route_seq, self.edge_hosts, self.routing_crc, # PolKa
-                            self.slice) # Slice
+                            self.slice, self.slice_metric)         # Slice  
 
         def generate_graph(self):
                 print("\nNetwork Topology created files/topo.png\n")
@@ -304,7 +320,7 @@ class generator:
         def parse_usercode(self):
                 print("\nParsing User P4 Code\n")
                 if (self.p4_code != ''):
-                        editP4(self.p4_code, self.rec_port)
+                        editP4(self.p4_code, self.rec_port, self.link, self.links_rec, self.rec_port_bw)     # Recirculation bandwidth)
                 else:
                         print("\nNo P4 Code defined\n")
 

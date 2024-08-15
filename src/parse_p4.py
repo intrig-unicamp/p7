@@ -35,7 +35,8 @@ def encontrar_chave(string):
 
 
 
-def editP4(p4_code, u_port): #put the file names as parameter
+def editP4(p4_code, u_port,
+		   links, links_rec, rec_bw):
 
 	#files used
 	p4_original = p4_code # file name of original user p4 code
@@ -45,6 +46,17 @@ def editP4(p4_code, u_port): #put the file names as parameter
 		p4_copy = "files/" + p4_copy[-1] + "_mod.p4"
 	else:
 		p4_copy = "files/" + p4_name[0] + "_mod.p4"
+
+	different_bw = 0
+	rec_port_bw = 0
+	values_at_position = [sublist[2] for sublist in links]
+	if len(set(values_at_position)) != 1:
+		different_bw = 1
+		try:
+			index = rec_bw[0].index("/")
+			rec_port_bw = rec_bw[0][0:index]
+		except ValueError:
+			rec_port_bw = rec_bw[0]
 
 	user_port = u_port
 
@@ -161,17 +173,29 @@ def editP4(p4_code, u_port): #put the file names as parameter
 
 	matchi = re.search(patternApply, allContent[ig3.end():])
 
-
 	mm = encontrar_chave(allContent[ig3.end()+1:])
-
-	#print("posiÃ§ao da")	
-	#print(mm)
-
 
 	st = matchi.start()
 	en = matchi.end()
 
-	allContent = allContent[:ig3.end()+1 + mm-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+1 + mm-1:]	
+	new_apply = allContent[ig3.end()+st+8:ig3.end()+en-5]
+
+	fw_p7 = "\tif ("
+	links_condition = "\tif (hdr.rec.sw == "
+	for i in range(len(links_rec)):
+		if i == 0 :
+			fw_p7 = fw_p7 + "ig_intr_md.ingress_port == " + str(i)
+			links_condition = links_condition + str(links_rec[i]) + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(i) + ";\n\t}\n"
+		elif i < (len(links_rec)) and i > 0:
+			fw_p7 = fw_p7 + " || ig_intr_md.ingress_port == " + str(i)
+			links_condition = links_condition + "\telse if (hdr.rec.sw == "+ str(links_rec[i]) + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(i) + ";\n\t}\n"
+		if i == (len(links_rec) -1):
+			fw_p7 = fw_p7 + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t}\n\telse{\n" + new_apply + "\n" + links_condition + "\telse{\n\t\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t}\n\t}\n"
+
+	if different_bw == 1:
+		allContent = allContent[:ig3.end()+st+8] + fw_p7 + allContent[ig3.end()+en-1:]
+	else:
+		allContent = allContent[:ig3.end()+1 + mm-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+1 + mm-1:]	
 
 	
 	#allContent = allContent[:ig3.end()+en-1] + "\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t" + allContent[ig3.end()+en-1:]

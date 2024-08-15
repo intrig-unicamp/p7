@@ -16,7 +16,7 @@
 
 def generate_p4(rec_port, port_user, name_sw, hosts, links,
 				routing_model, route_ids, dec_s, route_seq, edge_hosts, crc,
-				slice_list):
+				slice_list, slice_metric):
 	
 	if (routing_model == 0):
 		model = "default"
@@ -68,8 +68,8 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		f.write("const PortId_t rec_port = " + str(rec_port) + ";       // recirculation port\n")
 		f.write("const PortId_t port_user = " + str(port_user) + ";       // recirculation port\n")
 		for i in range(len(links)):
-			f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency" + str(i) + "  - 10000000 - 10ms\n")
-		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // latency  - 10000000 - 10ms\n")
+			f.write("const bit<32> latency" + str(i) + " = " + str(links[i][4]*1000000) + ";   // latency" + str(i) + "  - " + str(links[i][4]*1000000) + " - " + str(links[i][4]) + "ms\n")
+		f.write("const bit<32> constJitter = " + str(links[0][5]*1000000) + ";   // jitter  - " + str(links[0][5]*1000000) + " - " + str(links[0][5]) + "ms\n")
 		f.write("const bit<7> percentTax = " + str(int(links[0][6]*127/100)) + ";   // percent*127/100\n")
 	else:
 		f.write("const vlan_id_t p7_vlan = 9999;        // vlan for P7\n")
@@ -492,7 +492,12 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 	if (routing_model == 1):
 		f.write("   table slice_dst {\n")
 		f.write("       key = {\n")
-		f.write("           hdr.tcp.dst_port   : exact;\n")
+		if slice_metric == "TCP":
+			f.write("           hdr.tcp.dst_port   : exact;\n")
+		elif slice_metric == "UDP":
+			f.write("           hdr.udp.dst_port   : exact;\n")
+		elif slice_metric == "ToS":
+			f.write("           hdr.ipv4.diffserv   : exact;\n")
 		f.write("       }\n")
 		f.write("       actions = {\n")
 		f.write("           slice_select_dst;\n")
@@ -504,7 +509,12 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		f.write("\n")
 		f.write("   table slice_src {\n")
 		f.write("       key = {\n")
-		f.write("           hdr.tcp.src_port   : exact;\n")
+		if slice_metric == "TCP":
+			f.write("           hdr.tcp.src_port   : exact;\n")
+		elif slice_metric == "UDP":
+			f.write("           hdr.udp.src_port   : exact;\n")
+		elif slice_metric == "ToS":
+			f.write("           hdr.ipv4.diffserv   : exact;\n")
 		f.write("       }\n")
 		f.write("       actions = {\n")
 		f.write("           slice_select_src;\n")
@@ -548,9 +558,9 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 	f.write("                //Number of switch\n")
 	for i in range(len(links)):
 		if i == 0:
-			f.write("                if (hdr.rec.sw == " + str(i) + "){                   // 0 - ID switch\n")
+			f.write("                if (hdr.rec.sw == " + str(i) + "){                   // " + str(i) + " - ID switch\n")
 		else:
-			f.write("                else if (hdr.rec.sw == " + str(i) + "){                   // 0 - ID switch\n")
+			f.write("                else if (hdr.rec.sw == " + str(i) + "){                   // " + str(i) + " - ID switch\n")
 		f.write("                    bit<8> value_tscal;\n")
 		f.write("                    md.ts_diff = 0;\n")
 		f.write("                    comp_diff();\n")
