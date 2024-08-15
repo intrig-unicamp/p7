@@ -297,7 +297,8 @@ class generator:
 
                 generate_bf(self.host, self.vlan_link, self.tableEnt, self.tableinfo, self.sw_ids, self.p4_code, self.mirrorinfo, 
                             self.routing_model, self.route_ids, self.edge_links, self.route_seq, self.link_seq, self.route_dest, self.edge_hosts, self.name_sw, # PolKa
-                            self.slice, self.slice_number) # Slice
+                            self.slice, self.slice_number, self.slice_metric) # Slice
+
 
         def generate_p4code(self):
                 if len(self.name_sw) > 0:
@@ -311,7 +312,7 @@ class generator:
 
                 generate_p4(self.rec_port, self.port_user, self.name_sw, self.host, self.link, 
                             self.routing_model, self.route_ids, self.dec_s, self.route_seq, self.edge_hosts, self.routing_crc, # PolKa
-                            self.slice, self.slice_metric)         # Slice  
+                            self.slice, self.slice_metric) # Slice
 
         def generate_graph(self):
                 print("\nNetwork Topology created files/topo.png\n")

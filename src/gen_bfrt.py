@@ -16,7 +16,7 @@
 
 def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mirror,
                 routing_model, route_ids, edge_links, route_seq, link_seq, route_dest, edge_hosts, name_sw,
-                slice_list, slice_number):
+                slice_list, slice_number, slice_metric):
     links = []
     
     for j in range(len(hosts)):
@@ -123,12 +123,20 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mir
         index_val = 0
         for i in range(len(slice_list)):
             if slice_list[i][0] != default_slice_number:
-                f.write("slice_dst = p4p7.SwitchIngress.slice_dst\n")
-                f.write("slice_dst.add_with_slice_select_dst(dst_port=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
-                index_val = index_val + 1
-                f.write("slice_src = p4p7.SwitchIngress.slice_src\n")
-                f.write("slice_src.add_with_slice_select_src(src_port=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
-                f.write("\n")
+                if slice_metric == "ToS":
+                    f.write("slice_dst = p4p7.SwitchIngress.slice_dst\n")
+                    f.write("slice_dst.add_with_slice_select_dst(diffserv=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    index_val = index_val + 1
+                    f.write("slice_src = p4p7.SwitchIngress.slice_src\n")
+                    f.write("slice_src.add_with_slice_select_src(diffserv=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    f.write("\n")
+                else:
+                    f.write("slice_dst = p4p7.SwitchIngress.slice_dst\n")
+                    f.write("slice_dst.add_with_slice_select_dst(dst_port=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    index_val = index_val + 1
+                    f.write("slice_src = p4p7.SwitchIngress.slice_src\n")
+                    f.write("slice_src.add_with_slice_select_src(src_port=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    f.write("\n")
 
         for i in range(len(edge_links)):
             if (i == 0):
