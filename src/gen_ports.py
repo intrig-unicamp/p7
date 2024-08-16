@@ -70,7 +70,7 @@ def generate_port(hosts, links, vlans, rec_bw):
 					if a == 4:
 						print("Only 4 different Bandwidth available")
 						exit()
-					f.write("port-add " + str(rec_port_bw) + "/" + str(a) + " " + str(int(hosts[0][3]/1000000000)) + "G NONE\n")
+					f.write("port-add " + str(rec_port_bw) + "/" + str(a) + " " + "10" + "G NONE\n")
 					f.write("port-loopback " + str(rec_port_bw) + "/" + str(a) + " mac-near\n")
 					f.write("port-enb " + str(rec_port_bw) + "/" + str(a) + "\n")
 					links_rec.append(l)
