@@ -64,7 +64,8 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 	if (len(hosts) > 0):
 		f.write("const vlan_id_t p7_vlan = " + str(hosts[0][6]) + ";        // vlan for P7\n")
 		f.write("const bit<16> total_sw = " + str(len(name_sw)) + ";         // total number of switches\n")
-		f.write("const bit<10> pkt_loss = " + str(hex(int(round(10.2*links[0][3])))) + ";       // packet loss  - 0xCC - 240 - 20%\n")
+		for i in range(len(links)):
+			f.write("const bit<10> pkt_loss" + str(i) + " = " + str(hex(int(round(10.2*links[i][3])))) + ";       // packet loss  - " + str(links[i][3]) + "%\n")
 		f.write("const PortId_t rec_port = " + str(rec_port) + ";       // recirculation port\n")
 		f.write("const PortId_t port_user = " + str(port_user) + ";       // recirculation port\n")
 		for i in range(len(links)):
@@ -74,7 +75,8 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 	else:
 		f.write("const vlan_id_t p7_vlan = 9999;        // vlan for P7\n")
 		f.write("const bit<16> total_sw = 0;         // total number of switches\n")
-		f.write("const bit<10> pkt_loss = 0;       // packet loss  - 0xCC - 240 - 20%\n")
+		for i in range(len(links)):
+			f.write("const bit<10> pkt_loss" + str(i) + " = 0;       // packet loss  - " + str(links[i][3]) + "%\n")
 		f.write("const PortId_t rec_port = 68;       // recirculation port\n")
 		for i in range(len(links)):
 			f.write("const bit<32> latency" + str(i) + " = 0;   // latency" + str(i) + "  - 10000000 - 10ms\n")
@@ -574,7 +576,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		f.write("                    value_tscal = tscal_action" + str(i) + ".execute(1);\n")
 		f.write("                    if (value_tscal == 1){\n")
 		f.write("                        bit<10> R = rnd.get();\n")
-		f.write("                        if (R >= pkt_loss) {            // @2-% of pkt loss \n")
+		f.write("                        if (R >= pkt_loss" + str(i) + ") {            // @2-% of pkt loss \n")
 		f.write("                            basic_fwd.apply();\n")
 		if (routing_model == 1):
 			f.write("                            basic_fwd_hash.apply();\n")
