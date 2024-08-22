@@ -125,10 +125,10 @@ def generate_bf(hosts, vlans, tableEntries, usertables, swith_id, user_code, mir
             if slice_list[i][0] != default_slice_number:
                 if slice_metric == "ToS":
                     f.write("slice_dst = p4p7.SwitchIngress.slice_dst\n")
-                    f.write("slice_dst.add_with_slice_select_dst(diffserv=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    f.write("slice_dst.add_with_slice_select_dst(diffserv=" + str(slice_list[i][1]) + ", dest_ip=IPAddress(\'" + str(route_dest[i+index_val]) + "\'), routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
                     index_val = index_val + 1
                     f.write("slice_src = p4p7.SwitchIngress.slice_src\n")
-                    f.write("slice_src.add_with_slice_select_src(diffserv=" + str(slice_list[i][1]) + ", routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
+                    f.write("slice_src.add_with_slice_select_dst(diffserv=" + str(slice_list[i][1]) + ", dest_ip=IPAddress(\'" + str(route_dest[i+index_val]) + "\'), routeIdPacket=" + str(route_ids[i+index_val]) + ")\n")
                     f.write("\n")
                 else:
                     f.write("slice_dst = p4p7.SwitchIngress.slice_dst\n")

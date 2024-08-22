@@ -500,6 +500,7 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 			f.write("           hdr.udp.dst_port   : exact;\n")
 		elif slice_metric == "ToS":
 			f.write("           hdr.ipv4.diffserv   : exact;\n")
+			f.write("           hdr.rec.dest_ip   	: exact;\n")
 		f.write("       }\n")
 		f.write("       actions = {\n")
 		f.write("           slice_select_dst;\n")
@@ -509,22 +510,21 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 		f.write("       size = 128;\n")
 		f.write("   }\n")
 		f.write("\n")
-		f.write("   table slice_src {\n")
-		f.write("       key = {\n")
-		if slice_metric == "TCP":
-			f.write("           hdr.tcp.src_port   : exact;\n")
-		elif slice_metric == "UDP":
-			f.write("           hdr.udp.src_port   : exact;\n")
-		elif slice_metric == "ToS":
-			f.write("           hdr.ipv4.diffserv   : exact;\n")
-		f.write("       }\n")
-		f.write("       actions = {\n")
-		f.write("           slice_select_src;\n")
-		f.write("           @defaultonly NoAction;\n")
-		f.write("       }\n")
-		f.write("       const default_action = NoAction();\n")
-		f.write("       size = 128;\n")
-		f.write("   }\n")
+		if slice_metric == "TCP" or slice_metric == "UDP":
+			f.write("   table slice_src {\n")
+			f.write("       key = {\n")
+			if slice_metric == "TCP":
+				f.write("           hdr.tcp.src_port   : exact;\n")
+			elif slice_metric == "UDP":
+				f.write("           hdr.udp.src_port   : exact;\n")
+			f.write("       }\n")
+			f.write("       actions = {\n")
+			f.write("           slice_select_src;\n")
+			f.write("           @defaultonly NoAction;\n")
+			f.write("       }\n")
+			f.write("       const default_action = NoAction();\n")
+			f.write("       size = 128;\n")
+			f.write("   }\n")
 
 	f.write("\n")
 	f.write("    apply {\n")
@@ -546,8 +546,11 @@ def generate_p4(rec_port, port_user, name_sw, hosts, links,
 	f.write("        if (hdr.vlan_tag.isValid() && !hdr.rec.isValid() && !hdr.arp.isValid()) {\n")
 	f.write("            vlan_fwd.apply();\n")
 	if (routing_model == 1):
-		f.write("            slice_dst.apply();\n")
-		f.write("            slice_src.apply();\n")
+		if slice_metric == "ToS":
+			f.write("            slice_dst.apply();\n")
+		else:
+			f.write("            slice_dst.apply();\n")
+			f.write("            slice_src.apply();\n")
 	f.write("        }\n")
 	f.write("        else if (hdr.vlan_tag.isValid() && !hdr.rec.isValid() && hdr.arp.isValid()) {\n")
 	f.write("            arp_fwd.apply();\n")
