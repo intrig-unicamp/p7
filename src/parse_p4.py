@@ -187,7 +187,7 @@ def editP4(p4_code, u_port,
 			fw_p7 = fw_p7 + "ig_intr_md.ingress_port == " + str(rec_bw[1] + i)
 			links_condition = links_condition + str(links_rec[i]) + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(rec_bw[1] + i) + ";\n\t}\n"
 		elif i < (len(links_rec)) and i > 0:
-			fw_p7 = fw_p7 + " || ig_intr_md.ingress_port == " + str(i)
+			fw_p7 = fw_p7 + " || ig_intr_md.ingress_port == " + str(rec_bw[1] + i)
 			links_condition = links_condition + "\telse if (hdr.rec.sw == "+ str(links_rec[i]) + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(rec_bw[1] + i) + ";\n\t}\n"
 		if i == (len(links_rec) -1):
 			fw_p7 = fw_p7 + "){\n\t\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t}\n\telse{\n" + new_apply + "\n" + links_condition + "\telse{\n\t\tig_intr_tm_md.ucast_egress_port = " + str(user_port) + ";\n\t}\n\t}\n"
